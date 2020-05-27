@@ -25,7 +25,7 @@ class Field:
     """
     def __init__(self, wavelength=1.0, size=0, N=0):
         """
-        Initialize a new input light field.
+        A basic light field.
 
         Args:
             wavelength: float
@@ -37,7 +37,7 @@ class Field:
             N: int
                 pixel numbers of input light field in one dimension
         """
-        # input error check
+        # check of inputted parameters
         if wavelength <= 0:
             raise ValueError('Wavelength cannot be less than 0.')
         if size < 0:
@@ -72,12 +72,29 @@ class PlaneWave(Field):
     A plane wave light field.
 
     Args:
-    x_tilt: float
-        Tilt in x direction, unit: rad
-    y_tilt: float
-        Tilt in y direciton, unit: rad
+        wavelength: float
+            physical wavelength of input light, unit: µm
+        size: float
+            physical size of input light field, unit: mm
+                circle: diameter
+                square: side length
+        N: int
+            pixel numbers of input light field in one dimension
+        x_tilt: float
+            Tilt coefficient in x direction, unit: rad
+        y_tilt: float
+            Tilt coefficient in y direciton, unit: rad
     """
     def __init__(self, wavelength, size, N, x_tilt=0, y_tilt=0):
+        """
+        A plane wave light field.
+
+        Args:
+            x_tilt: float
+                Tilt in x direction, unit: rad
+            y_tilt: float
+                Tilt in y direciton, unit: rad
+        """
         super().__init__(wavelength, size, N)
         self._x_tilt = x_tilt
         self._y_tilt = y_tilt
@@ -85,12 +102,11 @@ class PlaneWave(Field):
         self._complex_amp = self.__tilt(self._complex_amp)
 
     def __tilt(self, complex_amp):
-        h, w = self._N, self._N
-        cy, cx = int(h / 2), int(w / 2)
-        Y, X = np.mgrid[:h, :w]
-        dx = self._size / self._N
-        Y = (Y - cy) * dx
-        X = (X - cx) * dx
+        """
+        Return a tilted light field.
+        """
+        x = np.linspace(-self._size / 2, self._size / 2, self._N)
+        X, Y = np.meshgrid(x, x)
         k = 2 * np.pi / self._wavelength
         phi = -k * (self._x_tilt * X + self._y_tilt * Y)
         complex_amp *= np.exp(1j * phi)

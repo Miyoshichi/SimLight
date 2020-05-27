@@ -8,9 +8,8 @@ import numpy as np
 
 
 def main():
-    input_field = sl.PlaneWave(0.6328, 1, 100, 1, 1)
-    slpt.plot_wavefront(input_field, None, False, 'Example')
-    print(input_field.complex_amp)
+    input_field = sl.PlaneWave(0.6328, 1, 100, 3, 6)
+    slpt.plot_wavefront(input_field)
 
 
 if __name__ == '__main__':
