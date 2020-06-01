@@ -24,12 +24,12 @@ def plot_wavefront(field, mask_r=None, plot3d=False, title=''):
             A light field.
         mask_r: float
             Radius of a circle mask. (optional, between 0 and 1,
-            default is None)
+            default is None).
         plot3d: bool
             Whether plot the figure in 3d. (optional, default is
-            false)
+            false).
         title: str
-            Title of the figure. (optional)
+            Title of the figure. (optional).
     """
     # input error check
     if mask_r:
@@ -53,6 +53,9 @@ def plot_wavefront(field, mask_r=None, plot3d=False, title=''):
             max_value = np.max(phase_[norm_radius <= mask_r])
             min_value = np.min(phase_[norm_radius <= mask_r])
         else:
+            length = phase_.shape[0]
+            norm_length = np.linspace(-1, 1, length)
+            X, Y = np.meshgrid(norm_length, norm_length)
             max_value = np.max(phase_)
             min_value = np.min(phase_)
         stride = math.ceil(field.N / 25)

@@ -8,8 +8,8 @@ import numpy as np
 
 
 def main():
-    input_field = sl.PlaneWave(0.6328, 1, 100, 3, 6)
-    slpt.plot_wavefront(input_field)
+    input_field = sl.SphericalWave(0.6328, 1, 1000, 5)
+    slpt.plot_wavefront(input_field, mask_r=0.8, plot3d=True)
 
 
 if __name__ == '__main__':

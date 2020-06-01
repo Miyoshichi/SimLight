@@ -15,13 +15,13 @@ class Field:
 
     Args:
         wavelength: float
-            physical wavelength of input light, unit: µm
+            Physical wavelength of input light, unit: µm.
         size: float
-            physical size of input light field, unit: mm
+            Physical size of input light field, unit: mm.
                 circle: diameter
                 square: side length
         N: int
-            pixel numbers of input light field in one dimension
+            Pixel numbers of input light field in one dimension.
     """
     def __init__(self, wavelength=1.0, size=0, N=0):
         """
@@ -29,13 +29,13 @@ class Field:
 
         Args:
             wavelength: float
-                physical wavelength of input light, unit: µm
+                Physical wavelength of input light, unit: µm.
             size: float
-                physical size of input light field, unit: mm
+                Physical size of input light field, unit: mm.
                     circle: diameter
                     square: side length
             N: int
-                pixel numbers of input light field in one dimension
+                Pixel numbers of input light field in one dimension.
         """
         # check of inputted parameters
         if wavelength <= 0:
@@ -73,17 +73,17 @@ class PlaneWave(Field):
 
     Args:
         wavelength: float
-            physical wavelength of input light, unit: µm
+            Physical wavelength of input light, unit: µm.
         size: float
-            physical size of input light field, unit: mm
+            Physical size of input light field, unit: mm.
                 circle: diameter
                 square: side length
         N: int
-            pixel numbers of input light field in one dimension
+            Pixel numbers of input light field in one dimension.
         x_tilt: float
-            Tilt coefficient in x direction, unit: rad
+            Tilt coefficient in x direction, unit: rad.
         y_tilt: float
-            Tilt coefficient in y direciton, unit: rad
+            Tilt coefficient in y direciton, unit: rad.
     """
     def __init__(self, wavelength, size, N, x_tilt=0, y_tilt=0):
         """
@@ -91,9 +91,9 @@ class PlaneWave(Field):
 
         Args:
             x_tilt: float
-                Tilt in x direction, unit: rad
+                Tilt in x direction, unit: rad.
             y_tilt: float
-                Tilt in y direciton, unit: rad
+                Tilt in y direciton, unit: rad.
         """
         super().__init__(wavelength, size, N)
         self._x_tilt = x_tilt
@@ -123,3 +123,53 @@ class PlaneWave(Field):
     @property
     def field_type(self):
         return self._field_type
+
+
+class SphericalWave(Field):
+    """
+    A spherical wave light field.
+
+    Args:
+        wavelength: float
+            Physical wavelength of input light, unit: µm.
+        size: float
+            Physical size of input light field, unit: mm.
+                circle: diameter
+                square: side length
+        N: int
+            Pixel numbers of input light field in one dimension.
+        r: float
+            The radius of the spherical wave, unit: mm.
+    """
+    def __init__(self, wavelength, size, N, r=0):
+        """
+        A spherical wave light field.
+
+        Args:
+            r: float
+                The radius of the spherical wave, unit: mm.
+        """
+        # check of inputted parameters
+        if r < size / 2:
+            raise ValueError('Radius is too small.')
+
+        super().__init__(wavelength, size, N)
+        self._r = r
+        self._field_type = 'spherical wave'
+        self._complex_amp = self.__focus(self._complex_amp)
+
+    def __focus(self, complex_amp):
+        """
+        Return a spherical wave.
+        """
+        x = np.linspace(-self._size / 2, self._size / 2, self._N)
+        X, Y = np.meshgrid(x, x)
+        R = np.sqrt(X**2 + Y**2)
+        k = 2 * np.pi / self._wavelength
+        phi = -k * (self._r - np.sqrt(self._r**2 - R**2))
+        complex_amp *= np.exp(1j * phi)
+        return complex_amp
+
+    @property
+    def r(self):
+        return self._r
