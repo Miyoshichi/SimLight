@@ -12,7 +12,7 @@ import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
 
 from .utils import pv, rms, circle_aperature
-from .calc import phase
+from .calc import phase, intensity
 
 
 def plot_wavefront(field, mask_r=None, plot3d=False, title=''):
@@ -61,6 +61,45 @@ def plot_wavefront(field, mask_r=None, plot3d=False, title=''):
         stride = math.ceil(field.N / 25)
         im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
                              cmap='rainbow', vmin=min_value, vmax=max_value)
+    if title:
+        ax.set_title(title)
+    fig.colorbar(im)
+
+    plt.show()
+
+
+def plot_intensity(field, mask_r=None, norm_type=0, title=''):
+    """
+    Plot the intensity of light field using matplotlib.
+
+    Args:
+        field:
+            A light field.
+        mask_r: float
+            Radius of a circle mask. (optional, between 0 and 1,
+            default is None).
+        norm_type: int
+            Type of normalization. (optional, default is 0)
+            0: no normalization.
+            1: normalize to 0~1.
+            2: normalize to 0~255.
+        title: str
+            Title of the figure. (optional).
+    """
+    # input error check
+    if mask_r:
+        if mask_r > 1 or mask_r < 0:
+            raise ValueError('Invalid radius of circle mask.')
+
+    intensity_ = intensity(field, norm_type=norm_type)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    im = ax.imshow(intensity_, cmap='gist_gray', extent=[-1, 1, -1, 1])
+    if mask_r:
+        mask = patches.Circle([0, 0], mask_r, fc='none', ec='none')
+        ax.add_patch(mask)
+        im.set_clip_path(mask)
     if title:
         ax.set_title(title)
     fig.colorbar(im)

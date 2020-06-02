@@ -137,39 +137,43 @@ class SphericalWave(Field):
                 circle: diameter
                 square: side length
         N: int
-            Pixel numbers of input light field in one dimension.
-        r: float
-            The radius of the spherical wave, unit: mm.
+            Pixel numbers of input light field in one
+            dimension.
+        z: float
+            The propagation distance of the spherical wave
+            from center, unit: mm.
     """
-    def __init__(self, wavelength, size, N, r=0):
+    def __init__(self, wavelength, size, N, z=0):
         """
         A spherical wave light field.
 
         Args:
-            r: float
-                The radius of the spherical wave, unit: mm.
+            z: float
+                The propagation distance of the spherical wave
+                from center, unit: mm.
         """
-        # check of inputted parameters
-        if r < size / 2:
-            raise ValueError('Radius is too small.')
-
         super().__init__(wavelength, size, N)
-        self._r = r
+        self._z = z
         self._field_type = 'spherical wave'
-        self._complex_amp = self.__focus(self._complex_amp)
+        self._complex_amp = self.__sphere(self._complex_amp)
 
-    def __focus(self, complex_amp):
+    def __sphere(self, complex_amp):
         """
         Return a spherical wave.
         """
         x = np.linspace(-self._size / 2, self._size / 2, self._N)
         X, Y = np.meshgrid(x, x)
-        R = np.sqrt(X**2 + Y**2)
+        d = np.sqrt(X**2 + Y**2)
+        r = np.sqrt(d**2 + self._z**2)
         k = 2 * np.pi / self._wavelength
-        phi = -k * (self._r - np.sqrt(self._r**2 - R**2))
-        complex_amp *= np.exp(1j * phi)
+        phi = -k * r
+        complex_amp *= np.exp(1j * phi) / r
         return complex_amp
 
     @property
-    def r(self):
-        return self._r
+    def z(self):
+        return self._z
+
+    @property
+    def field_type(self):
+        return self._field_type

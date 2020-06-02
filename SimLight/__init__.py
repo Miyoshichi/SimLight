@@ -14,6 +14,7 @@
 from ._version import __version__
 from .field import Field, PlaneWave, SphericalWave
 from . import plottools
+from . import calc
 
 sl_version = __version__
 print('SimLight ' + sl_version + '\n')
