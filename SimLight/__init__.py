@@ -12,7 +12,7 @@
 """
 
 from ._version import __version__
-from .field import Field, PlaneWave, SphericalWave
+from .field import Field, PlaneWave, SphericalWave, Gaussian
 from . import plottools
 from . import calc
 

@@ -31,7 +31,7 @@ def phase(field, unwrap=False):
     return phase
 
 
-def intensity(field, norm_type=0):
+def intensity(field, norm_type=1):
     """
     Calculate the intensity of a light field.
 
@@ -39,30 +39,21 @@ def intensity(field, norm_type=0):
         field: tuple
             The light field to be calculated.
         norm_type: int
-            Type of normalization. (optional, default is 0)
-            0: no normalization.
-            1: normalize to 0~1.
-            2: normalize to 0~255.
+            Type of normalization. (optional, default is 1).
+            0: no normalization
+            1: normalize to 0~1
+            2: normalize to 0~255
     Returns：
         intensity:
             The intensity of the light field.
     """
     intensity = np.abs(field.complex_amp)**2
 
-    if norm_type < 0 or norm_type > 2:
+    if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
         raise ValueError('Unknown normalization type.')
-    elif norm_type == 0:
-        print('normalization type: 0')
     elif norm_type >= 1:
         intensity /= np.max(intensity)
-        if norm_type == 1:
-            print('normalization type: 1')
-        elif norm_type == 2:
+        if norm_type == 2:
             intensity *= 255
-            print('normalizaiton: 2')
-        else:
-            raise ValueError('Unknown normalization type.')
-    else:
-        raise ValueError('Unknown normalization type.')
 
     return intensity

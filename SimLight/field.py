@@ -104,6 +104,8 @@ class PlaneWave(Field):
     def __tilt(self, complex_amp):
         """
         Return a tilted light field.
+
+        U = A * exp(ikr - φ0)
         """
         x = np.linspace(-self._size / 2, self._size / 2, self._N)
         X, Y = np.meshgrid(x, x)
@@ -150,7 +152,7 @@ class SphericalWave(Field):
         Args:
             z: float
                 The propagation distance of the spherical wave
-                from center, unit: mm.
+                from the center, unit: mm.
         """
         super().__init__(wavelength, size, N)
         self._z = z
@@ -160,15 +162,93 @@ class SphericalWave(Field):
     def __sphere(self, complex_amp):
         """
         Return a spherical wave.
+
+        U = (A / r) * exp(ikr - φ0)
+            where r = √(x^2 + y^2 + z^2)
         """
         x = np.linspace(-self._size / 2, self._size / 2, self._N)
         X, Y = np.meshgrid(x, x)
-        d = np.sqrt(X**2 + Y**2)
-        r = np.sqrt(d**2 + self._z**2)
+        r = np.sqrt(X**2 + Y**2 + self._z**2)
         k = 2 * np.pi / self._wavelength
         phi = -k * r
         complex_amp *= np.exp(1j * phi) / r
         return complex_amp
+
+    @property
+    def z(self):
+        return self._z
+
+    @property
+    def field_type(self):
+        return self._field_type
+
+
+class Gaussian(Field):
+    """
+    A gaussian beam light field.
+
+    Args:
+        wavelength: float
+            Physical wavelength of input light, unit: µm.
+        size: float
+            Physical size of input light field, unit: mm.
+                circle: diameter
+                square: side length
+        N: int
+            Pixel numbers of input light field in one
+            dimension.
+        w0: float
+            Size of the waist, unit: mm
+        z: float
+            The propagation distance of the gaussian beam
+            from the waist, unit: mm.
+    """
+    def __init__(self, wavelength, size, N, w0=0, z=0):
+        """
+        A spherical wave light field.
+
+        Args:
+            w0: float
+                Size of the waist, unit: mm
+            z: float
+                The propagation distance of the gaussian beam
+                from the waist, unit: mm.
+        """
+        super().__init__(wavelength, size, N)
+        if w0 == 0:
+            w0 = self._size / 2
+
+        self._w0 = w0
+        self._z = z
+        self._field_type = 'gaussian beam'
+        self._complex_amp = self.__gaussian(self._complex_amp)
+
+    def __gaussian(self, complex_amp):
+        """
+        Return a TEM00 mode gaussian beam.
+
+        U = (A / ω(z)) * exp(-(x^2 + y^2) / ω^2(z)) *
+            exp(-ik(z + (x^2 + y^2) / 2r(z)) + iφ(z))
+            where ω(z) = ω0 * √(1 + (z / zR)^2)
+                  r(z) = z * (1 + (zR / z)^2)
+                  φ(z) = arctan(z / zR)
+                  zR = πω0^2 / λ
+        """
+        x = np.linspace(-self._size / 2, self._size / 2, self._N)
+        X, Y = np.meshgrid(x, x)
+        z_R = np.pi * self._w0**2 / self._wavelength
+        w_z = self._w0 * np.sqrt(1 + (self._z / z_R)**2)
+        r_z = self._z * (1 + (z_R / self._z)**2)
+        phi_z = np.arctan2(self._z, z_R)
+        k = 2 * np.pi / self._wavelength
+        complex_amp *= np.exp(-(X**2 + Y**2) / w_z**2) * \
+            np.exp(-1j * k * (self._z + (X**2 + Y**2) / 2 * r_z) +
+                   1j * phi_z) / w_z
+        return complex_amp
+
+    @property
+    def w0(self):
+        return self._w0
 
     @property
     def z(self):
