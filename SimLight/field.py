@@ -217,6 +217,8 @@ class Gaussian(Field):
         super().__init__(wavelength, size, N)
         if w0 == 0:
             w0 = self._size / 2
+        else:
+            w0 /= 2
 
         self._w0 = w0
         self._z = z
@@ -242,7 +244,7 @@ class Gaussian(Field):
         phi_z = np.arctan2(self._z, z_R)
         k = 2 * np.pi / self._wavelength
         complex_amp *= np.exp(-(X**2 + Y**2) / w_z**2) * \
-            np.exp(-1j * k * (self._z + (X**2 + Y**2) / 2 * r_z) +
+            np.exp(-1j * k * (self._z + (X**2 + Y**2) / (2 * r_z)) +
                    1j * phi_z) / w_z
         return complex_amp
 
