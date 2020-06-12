@@ -58,7 +58,7 @@ def circle_aperature(field, mask_r):
     length = field.shape[0]
     norm_length = np.linspace(-1, 1, length)
     X, Y = np.meshgrid(norm_length, norm_length)
-    norm_radius = (np.sqrt(X**2 + Y**2))**2
+    norm_radius = np.sqrt(X**2 + Y**2)
     X[norm_radius > mask_r] = np.nan
     Y[norm_radius > mask_r] = np.nan
 

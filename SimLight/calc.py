@@ -7,6 +7,7 @@ Created on May 22, 2020
 
 import numpy as np
 
+import SimLight as sl
 from .unwrap import simple_unwrap
 
 
@@ -23,7 +24,12 @@ def phase(field, unwrap=False):
         phase:
             The phase of the light field.
     """
-    phase = np.angle(field.complex_amp)
+    if isinstance(field, sl.Field) is True:
+        phase = np.angle(field.complex_amp)
+    elif isinstance(field, np.ndarray) is True:
+        phase = np.angle(field)
+    else:
+        raise ValueError('Invalid light field.')
 
     if unwrap is True:
         phase = simple_unwrap(phase)
@@ -47,7 +53,12 @@ def intensity(field, norm_type=1):
         intensity:
             The intensity of the light field.
     """
-    intensity = np.abs(field.complex_amp)**2
+    if isinstance(field, sl.Field) is True:
+        intensity = np.abs(field.complex_amp)**2
+    elif isinstance(field, np.ndarray) is True:
+        intensity = np.abs(field)**2
+    else:
+        raise ValueError('Invalid light field')
 
     if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
         raise ValueError('Unknown normalization type.')

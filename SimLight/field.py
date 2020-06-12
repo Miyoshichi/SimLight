@@ -8,6 +8,8 @@ Created on May 21, 2020
 import math
 import numpy as np
 
+from .plottools import plot_wavefront, plot_intensity
+
 
 class Field:
     """
@@ -49,6 +51,21 @@ class Field:
         self._size = size
         self._N = N
         self._complex_amp = np.ones([N, N], dtype=np.complex)
+
+    def plot_wavefront(self, mask_r=None, dimension=2, title=''):
+        mask_r = mask_r
+        dimension = dimension
+        title = title
+        field = [self._size, self._complex_amp, self._N]
+        plot_wavefront(field, mask_r, dimension, title)
+
+    def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, title=''):
+        mask_r = mask_r
+        norm_type = norm_type
+        dimension = dimension
+        title = title
+        field = [self._size, self._complex_amp]
+        plot_intensity(field, mask_r, norm_type, dimension, title)
 
     @property
     def wavelength(self):
