@@ -53,6 +53,20 @@ class Field:
         self._complex_amp = np.ones([N, N], dtype=np.complex)
 
     def plot_wavefront(self, mask_r=None, dimension=2, title=''):
+        """
+        Plot the wavefront of light field using matplotlib.
+
+        Args:
+            mask_r: float
+                Radius of a circle mask. (optional, between 0 and 1,
+                default is None).
+            dimension: int
+                Dimension of figure. (optional, default is 2, i.e. surface)
+                2: surface
+                3: 3d
+            title: str
+                Title of the figure. (optional).
+        """
         mask_r = mask_r
         dimension = dimension
         title = title
@@ -60,6 +74,25 @@ class Field:
         plot_wavefront(field, mask_r, dimension, title)
 
     def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, title=''):
+        """
+        Plot the intensity of light field using matplotlib.
+
+        Args:
+            mask_r: float
+                Radius of a circle mask. (optional, between 0 and 1,
+                default is None).
+            norm_type: int
+                Type of normalization. (optional, default is 0)
+                0: no normalization.
+                1: normalize to 0~1.
+                2: normalize to 0~255.
+            dimension: int
+                Dimension of figure. (optional, default is 2, i.e. surface)
+                1: line
+                2: surface
+            title: str
+                Title of the figure. (optional).
+        """
         mask_r = mask_r
         norm_type = norm_type
         dimension = dimension
@@ -116,20 +149,35 @@ class PlaneWave(Field):
         self._x_tilt = x_tilt
         self._y_tilt = y_tilt
         self._field_type = 'plane wave'
-        self._complex_amp = self.__tilt(self._complex_amp)
+        self._complex_amp *= self.__tilt(self._wavelength, self._size, self._N,
+                                         [self._x_tilt, self._y_tilt])
 
-    def __tilt(self, complex_amp):
+    @staticmethod
+    def __tilt(wavelength, size, N, tilt):
         """
         Return a tilted light field.
-
         U = A * exp(ikr - φ0)
+
+        Args:
+            wavelength: float
+                Physical wavelength of input light, unit: µm.
+            size: float
+                Physical size of input light field, unit: mm.
+                    circle: diameter
+                    square: side length
+            N: int
+                Pixel numbers of input light field in one dimension.
+            tilt: list, [x_tilt, y_tilt]
+                x_tilt: float
+                    Tilt coefficient in x direction, unit: rad.
+                y_tilt: float
+                    Tilt coefficient in y direciton, unit: rad.
         """
-        x = np.linspace(-self._size / 2, self._size / 2, self._N)
+        x = np.linspace(-size / 2, size / 2, N)
         X, Y = np.meshgrid(x, x)
-        k = 2 * np.pi / self._wavelength
-        phi = -k * (self._x_tilt * X + self._y_tilt * Y)
-        complex_amp *= np.exp(1j * phi)
-        return complex_amp
+        k = 2 * np.pi / wavelength
+        phi = -k * (tilt[0] * X + tilt[1] * Y)
+        return np.exp(1j * phi)
 
     @property
     def x_tilt(self):
@@ -174,22 +222,35 @@ class SphericalWave(Field):
         super().__init__(wavelength, size, N)
         self._z = z
         self._field_type = 'spherical wave'
-        self._complex_amp = self.__sphere(self._complex_amp)
+        self._complex_amp *= self.__sphere(self._wavelength, self._size,
+                                           self._N, self._z)
 
-    def __sphere(self, complex_amp):
+    @staticmethod
+    def __sphere(wavelength, size, N, z):
         """
         Return a spherical wave.
-
         U = (A / r) * exp(ikr - φ0)
             where r = √(x^2 + y^2 + z^2)
+
+        Args:
+            wavelength: float
+                Physical wavelength of input light, unit: µm.
+            size: float
+                Physical size of input light field, unit: mm.
+                    circle: diameter
+                    square: side length
+            N: int
+                Pixel numbers of input light field in one dimension.
+            z: float
+                The propagation distance of the spherical wave
+                from center, unit: mm.
         """
-        x = np.linspace(-self._size / 2, self._size / 2, self._N)
+        x = np.linspace(-size / 2, size / 2, N)
         X, Y = np.meshgrid(x, x)
-        r = np.sqrt(X**2 + Y**2 + self._z**2)
-        k = 2 * np.pi / self._wavelength
+        r = np.sqrt(X**2 + Y**2 + z**2)
+        k = 2 * np.pi / wavelength
         phi = -k * r
-        complex_amp *= np.exp(1j * phi) / r
-        return complex_amp
+        return np.exp(1j * phi) / r
 
     @property
     def z(self):
@@ -240,30 +301,45 @@ class Gaussian(Field):
         self._w0 = w0
         self._z = z
         self._field_type = 'gaussian beam'
-        self._complex_amp = self.__gaussian(self._complex_amp)
+        self._complex_amp *= self.__gaussian(self._wavelength, self._size,
+                                             self._N, self._w0, self._z)
 
-    def __gaussian(self, complex_amp):
+    @staticmethod
+    def __gaussian(wavelength, size, N, w0, z):
         """
         Return a TEM00 mode gaussian beam.
-
         U = (A / ω(z)) * exp(-(x^2 + y^2) / ω^2(z)) *
             exp(-ik(z + (x^2 + y^2) / 2r(z)) + iφ(z))
             where ω(z) = ω0 * √(1 + (z / zR)^2)
                   r(z) = z * (1 + (zR / z)^2)
                   φ(z) = arctan(z / zR)
                   zR = πω0^2 / λ
+
+        Args:
+            wavelength: float
+                Physical wavelength of input light, unit: µm.
+            size: float
+                Physical size of input light field, unit: mm.
+                    circle: diameter
+                    square: side length
+            N: int
+                Pixel numbers of input light field in one dimension.
+            w0: float
+                Size of the waist, unit: mm
+            z: float
+                The propagation distance of the gaussian beam
+                from the waist, unit: mm.
         """
-        x = np.linspace(-self._size / 2, self._size / 2, self._N)
+        x = np.linspace(-size / 2, size / 2, N)
         X, Y = np.meshgrid(x, x)
-        z_R = np.pi * self._w0**2 / self._wavelength
-        w_z = self._w0 * np.sqrt(1 + (self._z / z_R)**2)
-        r_z = self._z * (1 + (z_R / self._z)**2)
-        phi_z = np.arctan2(self._z, z_R)
-        k = 2 * np.pi / self._wavelength
-        complex_amp *= np.exp(-(X**2 + Y**2) / w_z**2) * \
-            np.exp(-1j * k * (self._z + (X**2 + Y**2) / (2 * r_z)) +
-                   1j * phi_z) / w_z
-        return complex_amp
+        z_R = np.pi * w0**2 / wavelength
+        w_z = w0 * np.sqrt(1 + (z / z_R)**2)
+        r_z = z * (1 + (z_R / z)**2)
+        phi_z = np.arctan2(z, z_R)
+        k = 2 * np.pi / wavelength
+        return np.exp(-(X**2 + Y**2) / w_z**2) *\
+            np.exp(-1j * k * (z + (X**2 + Y**2) / (2 * r_z)) + 1j * phi_z) /\
+            w_z
 
     @property
     def w0(self):
