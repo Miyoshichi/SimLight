@@ -13,8 +13,9 @@
 
 from ._version import __version__
 from .field import Field, PlaneWave, SphericalWave, Gaussian
+from .lens import Lens, CylindricalLens
+from .calc import phase, intensity, lens
 from . import plottools
-from . import calc
 
 sl_version = __version__
 print('SimLight ' + sl_version + '\n')

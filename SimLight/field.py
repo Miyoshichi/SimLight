@@ -42,7 +42,7 @@ class Field:
         # check of inputted parameters
         if wavelength <= 0:
             raise ValueError('Wavelength cannot be less than 0.')
-        if size < 0:
+        if size <= 0:
             raise ValueError('Light field cannot be smaller than 0.')
         if N <= 0:
             raise ValueError('Cannot generate zero light field')
@@ -115,6 +115,10 @@ class Field:
     @property
     def complex_amp(self):
         return self._complex_amp
+
+    @complex_amp.setter
+    def complex_amp(self, complex_amp):
+        self._complex_amp = complex_amp
 
 
 class PlaneWave(Field):
