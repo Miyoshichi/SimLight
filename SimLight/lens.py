@@ -16,7 +16,7 @@ class Lens:
         f: float
             Focal length of a lens.
     """
-    lens_number = 0
+    counts = 0
 
     def __init__(self, D, f=float('inf')):
         """
@@ -34,14 +34,16 @@ class Lens:
         if f == 0:
             raise ValueError('Focal length cannot be 0.')
 
+        Lens.counts += 1
         self._D = D
         self._f = f
+        self._lens_number = Lens.counts
         self._lens_type = 'lens'
         self._F = self.__F_number(self._D, self._f)
 
     @classmethod
     def new_lens(cls, D, f):
-        cls.lens_number += 1
+        # cls.counts += 1
         inst = cls(D, f)
         return inst
 
@@ -69,6 +71,10 @@ class Lens:
     @property
     def f(self):
         return self._f
+
+    @property
+    def lens_number(self):
+        return self._lens_number
 
     @property
     def lens_type(self):
@@ -113,7 +119,7 @@ class CylindricalLens(Lens):
 
     @classmethod
     def new_lens(cls, D, f, direction=0):
-        Lens.lens_number += 1
+        # Lens.counts += 1
         inst = cls(D, f, direction)
         return inst
 

@@ -338,7 +338,7 @@ class Gaussian(Field):
         X, Y = np.meshgrid(x, x)
         z_R = np.pi * w0**2 / wavelength
         w_z = w0 * np.sqrt(1 + (z / z_R)**2)
-        r_z = z * (1 + (z_R / z)**2)
+        r_z = z * (1 + (z_R / z)**2) if z is not 0 else float('inf')
         phi_z = np.arctan2(z, z_R)
         k = 2 * np.pi / wavelength
         return np.exp(-(X**2 + Y**2) / w_z**2) *\

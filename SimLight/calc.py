@@ -92,8 +92,8 @@ def lens(field, lens, z):
     # switch - case
     def simple_lens():
         r = np.sqrt(X**2 + Y**2 + (lens.f - z)**2)
-        # return k * (X**2 + Y**2) / (2 * lens.f)
-        phi = -k * np.sqrt(X**2 + Y**2 + z**2)
+        # phi = -k * (X**2 + Y**2) / (2 * lens.f)
+        phi = k * np.sqrt(X**2 + Y**2 + (lens.f - z)**2)
         return r, phi
 
     def cylindrical_lens():
@@ -102,8 +102,8 @@ def lens(field, lens, z):
         else:
             x = Y
         r = np.sqrt(x**2 + (lens.f - z)**2)
-        # return k * (X**2) / (2 * lens.f)
-        phi = -k * np.sqrt(x**2 + z**2)
+        # phi = -k * (X**2) / (2 * lens.f)
+        phi = k * np.sqrt(x**2 + (lens.f - z)**2)
         return r, phi
 
     options = {
@@ -114,6 +114,6 @@ def lens(field, lens, z):
     r, phi = options[lens.lens_type]()
     if lens.f < 0:
         phi = -phi
-    field.complex_amp *= np.exp(1j * phi) / r
+    field.complex_amp *= (np.exp(1j * phi) / r)
 
     return field

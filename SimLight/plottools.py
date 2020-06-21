@@ -38,7 +38,7 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         if mask_r > 1 or mask_r < 0:
             raise ValueError('Invalid radius of circle mask.')
     if dimension:
-        if dimension < 2 or dimension > 3 or type(dimension) is not int:
+        if dimension < 1 or dimension > 3 or type(dimension) is not int:
             raise ValueError('Invalid dimension.')
     if isinstance(field, sl.Field) is True:
         size = field.size
@@ -62,7 +62,8 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
                                   fc='none', ec='none')
             ax.add_patch(mask)
             im.set_clip_path(mask)
-    else:
+        fig.colorbar(im)
+    elif dimension == 3:
         ax = fig.add_subplot(111, projection='3d')
         length = np.linspace(-size / 2, size / 2, phase_.shape[0])
         X, Y = np.meshgrid(length, length)
@@ -80,7 +81,20 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
                              cmap='rainbow', vmin=min_value, vmax=max_value)
         ax.set_zlabel('Wavefront [rad]')
-    fig.colorbar(im)
+        fig.colorbar(im)
+    else:
+        ax = fig.add_subplot(111)
+        center = int(phase_.shape[0] / 2)
+        if mask_r:
+            length = int((phase_.shape[0] * mask_r) / 2) * 2
+            X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
+            [left, right] = [center - length / 2, center + length / 2]
+            im = ax.plot(X, phase_[center][int(left):int(right)])
+        else:
+            X = np.linspace(-size / 2, size / 2, phase_.shape[0])
+            im = ax.plot(X, phase_[center])
+        ax.set_xlabel('Size [mm]')
+        ax.set_ylabel('Phase [rad]')
 
     if title:
         ax.set_title(title)
