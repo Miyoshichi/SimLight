@@ -2,11 +2,15 @@
 
 from setuptools import setup
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 exec(open('./SimLight/_version.py').read())
 
 setup(
     name='SimLight',
     description='A tool helps your optical simulation.',
+    long_description=long_description,
     license='MIT License',
     version=__version__,
     author='Miyoshichi',
@@ -14,7 +18,7 @@ setup(
     packages=['SimLight'],
     install_requires=['numpy', 'matplotlib'],
     classifiers=[
-        'Development Stauts :: 3 - Alpha',
+        'Development Status :: 3 - Alpha',
         'Operating System :: OS Independent',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',

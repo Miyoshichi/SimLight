@@ -1,6 +1,9 @@
 .idea/
 .vscode/
+SimLight.egg-info/
 __pycache__/
+dist/
+build/
 
 *.pyc
 *.ipynb
