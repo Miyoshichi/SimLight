@@ -72,7 +72,7 @@ def intensity(field, norm_type=1):
 
 def lens(field, lens, z):
     """
-    Calculate the light field after passing through a lens.
+    Calculate the light field after passing through a lens. (Deprecated)
 
     Args:
         field: tuple

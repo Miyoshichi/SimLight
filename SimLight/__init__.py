@@ -14,7 +14,7 @@
 from ._version import __version__
 from .field import Field, PlaneWave, SphericalWave, Gaussian
 from .lens import Lens, CylindricalLens
-from .calc import phase, intensity, lens
+from .propagation import propagation, near_field_propagation
 from . import plottools
 
 sl_version = __version__
