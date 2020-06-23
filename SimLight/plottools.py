@@ -13,7 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import SimLight as sl
 from .utils import pv, rms, circle_aperature
-from .calc import phase, intensity
+from .calc import phase, intensity, psf
 
 
 def plot_wavefront(field, mask_r=None, dimension=2, title=''):
@@ -33,7 +33,7 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         title: str
             Title of the figure. (optional).
     """
-    # input error check
+    # check of input parameters
     if mask_r:
         if mask_r > 1 or mask_r < 0:
             raise ValueError('Invalid radius of circle mask.')
@@ -49,7 +49,7 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         phase_ = phase(field[1], unwrap=True)
         N = field[2]
     else:
-        raise ValueError('Invalid light field')
+        raise ValueError('Invalid light field.')
 
     fig = plt.figure()
 
@@ -124,7 +124,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
         title: str
             Title of the figure. (optional).
     """
-    # input error check
+    # check of input parameters
     if mask_r:
         if mask_r > 1 or mask_r < 0:
             raise ValueError('Invalid radius of circle mask.')
@@ -138,7 +138,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
         size = field[0]
         intensity_ = intensity(field[1], norm_type=norm_type)
     else:
-        raise ValueError('Invalid light field')
+        raise ValueError('Invalid light field.')
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -164,6 +164,42 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
             im = ax.plot(X, intensity_[center])
         ax.set_xlabel('Size [mm]')
         ax.set_ylabel('Intensity [a.u.]')
+
+    if title:
+        ax.set_title(title)
+
+    plt.show()
+
+
+def plot_psf(field, aperture_type='circle', title=''):
+    """
+    Show the figure of point spread function of a light field.
+
+    Args:
+        field: tuple
+            The light fiedl.
+        aperture_type: str
+            The shape of the aperture. (optional, default is 'circle')
+                circle: circle aperture
+                square: square aperture
+        title: str
+            Title of the figure. (optional).
+    """
+    aperture = ['circle', 'square']
+    # check of input parameters
+    if isinstance(field, sl.Field) is True:
+        size = field.size
+        if aperture_type not in aperture:
+            raise ValueError('Unsupport aperture type')
+        psf_ = psf(field, aperture_type)
+    else:
+        raise ValueError('Invalid light field.')
+
+    extent = [-size / 2, size / 2, -size / 2, size / 2]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    im = ax.imshow(psf_, cmap='rainbow', extent=extent, vmin=0)
 
     if title:
         ax.set_title(title)

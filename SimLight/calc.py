@@ -71,6 +71,38 @@ def intensity(field, norm_type=1):
     return intensity
 
 
+def psf(field, aperture_type='circle'):
+    """
+    Calculate the point spread function of a light field.
+
+    Args:
+        field: tuple
+            The light fiedl.
+        aperture_type: str
+            The shape of the aperture. (optional, default is 'circle')
+                circle: circle aperture
+                square: square aperture
+    Returns:
+        psf:
+            Point spread function of the input light field.
+    """
+
+    N = field.N
+    size = field.size
+    complex_amp = field.complex_amp
+
+    if aperture_type is 'circle':
+        x = np.linspace(-size / 2, size / 2, N)
+        X, Y = np.meshgrid(x, x)
+        R = np.sqrt(X**2 + Y**2)
+        r = np.sqrt(2 * (size)**2)
+        complex_amp[R >= r] = 0
+
+    psf = np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(complex_amp))))**2
+    psf /= np.max(psf)
+    return psf
+
+
 def aberration(field, zernike):
     """
     Return a aberrated light field due to the input zernike cofficients.
@@ -90,7 +122,7 @@ def aberration(field, zernike):
     n = zernike.n
     m = abs(zernike.m)
     j = zernike.j
-    coeff = zernike.cofficients
+    coeff = zernike.cofficients / (size / 2)
 
     x = np.linspace(-size / 2, size / 2, N)
     X, Y = np.meshgrid(x, x)
@@ -122,7 +154,7 @@ def aberration(field, zernike):
     for i in range(j):
         phi += coeff[i] * Z[:][:][i]
 
-    fi = -k * phi
-    field.complex_amp *= np.exp(1j * fi)
+    varphi = -k * phi
+    field.complex_amp *= np.exp(1j * varphi)
 
     return field
