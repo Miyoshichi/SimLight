@@ -7,12 +7,12 @@ Created on June 22, 2020
 
 import numpy as np
 
-from .diffraction import fresnel
+from .diffraction import fresnel, fresnel2, fraunhofer
 
 
 def propagation(field, lens, z):
     """
-    Calculate the light field after passing through a lens withou considering
+    Calculate the light field after passing through a lens without considering
     diffraction.
 
     Args:
@@ -79,7 +79,6 @@ def near_field_propagation(field, lens, z):
 
     # switch - case
     def simple_lens():
-        r = np.sqrt(X**2 + Y**2 + (lens.f - z)**2)
         phi = -k * (X**2 + Y**2) / (2 * lens.f)
         return phi
 
@@ -88,7 +87,6 @@ def near_field_propagation(field, lens, z):
             x = X
         else:
             x = Y
-        r = np.sqrt(x**2 + (lens.f - z)**2)
         phi = -k * (X**2) / (2 * lens.f)
         return phi
 
@@ -98,11 +96,13 @@ def near_field_propagation(field, lens, z):
     }
 
     phi = options[lens.lens_type]()
+    if lens.f < 0:
+        phi = -phi
 
     # complex amplitude after passing through lens
     field.complex_amp *= np.exp(1j * phi)
     # complex amplitude passing the distance z
     if z != 0:
-        field = fresnel(field, z)
+        field = fraunhofer(field, z)
 
     return field

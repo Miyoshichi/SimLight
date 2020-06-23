@@ -5,6 +5,7 @@ Created on May 22, 2020
 @author: Zhou Xiang
 """
 
+import math
 import numpy as np
 
 import SimLight as sl
@@ -68,3 +69,60 @@ def intensity(field, norm_type=1):
             intensity *= 255
 
     return intensity
+
+
+def aberration(field, zernike):
+    """
+    Return a aberrated light field due to the input zernike cofficients.
+
+    Args:
+        field: tuple
+            The light field to be calculated.
+        zernike: tuple
+            The Zernike Polynomials.
+    Returns:
+        aberrated_field: tuple
+            The aberrated light field.
+    """
+    N = field.N
+    size = field.size
+    k = 2 * np.pi / field.wavelength
+    n = zernike.n
+    m = abs(zernike.m)
+    j = zernike.j
+    coeff = zernike.cofficients
+
+    x = np.linspace(-size / 2, size / 2, N)
+    X, Y = np.meshgrid(x, x)
+    rho = np.sqrt(X**2 + Y**2)
+    theta = np.arctan2(Y, X)
+
+    # R_(n, m)(rho) = sum(k = 0 -> (n - m)/2): r_(n, m)(k) * rho(n, k)
+    n_minus_m_half = (n - m) / 2
+    n_plus_m_half = (n + m) / 2
+    r = np.zeros((j, int(max(n_minus_m_half)) + 1))
+    rho_exp = np.zeros((j, int(max(n_minus_m_half)) + 1), dtype=int)
+    R = np.zeros((j, N, N))
+    for i in range(j):
+        for ii in range(int(n_minus_m_half[i]) + 1):
+            r[i][ii] = ((-1)**ii * math.factorial(n[i] - ii)) /\
+                (math.factorial(ii) * math.factorial(n_plus_m_half[i] - ii) *
+                 math.factorial(n_minus_m_half[i] - ii))
+            rho_exp[i][ii] = n[i] - 2 * ii
+            R[:][:][i] = R[:][:][i] + r[i][ii] * (rho**(rho_exp[i][ii]))
+    # Z_(n, m)(j) = R_(n, m)(rho) * cos(m * theta) or sin(m * theta)
+    Z = np.zeros((j, N, N))
+    for i in range(j):
+        if m[i] < 0:
+            Z[:][:][i] = R[:][:][i] * np.sin(m[i] * theta)
+        else:
+            Z[:][:][i] = R[:][:][i] * np.cos(m[i] * theta)
+    # W(y, x) = zernike_coeff * Z
+    phi = np.zeros((N, N))
+    for i in range(j):
+        phi += coeff[i] * Z[:][:][i]
+
+    fi = -k * phi
+    field.complex_amp *= np.exp(1j * fi)
+
+    return field

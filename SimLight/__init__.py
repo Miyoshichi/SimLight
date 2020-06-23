@@ -15,7 +15,8 @@ from ._version import __version__
 from .field import Field, PlaneWave, SphericalWave, Gaussian
 from .lens import Lens, CylindricalLens
 from .propagation import propagation, near_field_propagation
-from . import plottools
+from .calc import phase, intensity, aberration
+from . import plottools, zernike
 
 sl_version = __version__
 print('SimLight ' + sl_version + '\n')

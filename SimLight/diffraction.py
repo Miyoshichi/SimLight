@@ -12,6 +12,16 @@ from pyfftw.interfaces.numpy_fft import fft2, ifft2
 
 def fresnel(field, z):
     """
+    Calculate the near-field Fresnel Diffraction of the light field.
+
+    Args:
+        field: tuple
+            The light field to be calculated.
+        z: float
+            Propagation distance.
+    Returns:
+        field: tuple
+            The diffracted light field.
     """
     N = field.N
     dx = field.size / field.N
@@ -84,5 +94,47 @@ def fresnel(field, z):
     Ftemp *= 0.25 * comp
     Ftemp *= iiijN
     field.complex_amp = Ftemp
+
+    return field
+
+
+def fresnel2(field, z):
+    """
+    Calculate the near-field Fresnel Diffraction of the light field.
+
+    Args:
+        field: tuple
+            The light field to be calculated.
+        z: float
+            Propagation distance.
+    Returns:
+        field: tuple
+            The diffracted light field.
+    """
+    print('Frenesl')
+    field.complex_amp *= np.exp(1j / z)
+    field.complex_amp = np.fft.fftshift(np.fft.fft2(field.complex_amp))
+
+    return field
+
+
+def fraunhofer(field, z):
+    """
+    Calculate the far-field Fraunhofer Diffraction of the light field.
+
+    Args:
+        field: tuple
+            The light field to be calculated.
+        z: float
+            Propagation distance.
+    Returns:
+        field: tuple
+            The diffracted light field.
+    """
+    print('Fraunhofer')
+    field.complex_amp *= np.exp(1j / z)
+    field.complex_amp = 1j * np.exp(1j * 2 * np.pi / field.wavelength * z) /\
+        field.wavelength / z *\
+        np.fft.fftshift(np.fft.fft2(field.complex_amp))
 
     return field

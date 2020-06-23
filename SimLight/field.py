@@ -52,6 +52,9 @@ class Field:
         self._N = N
         self._complex_amp = np.ones([N, N], dtype=np.complex)
 
+    def zernike_aberration(self):
+        pass
+
     def plot_wavefront(self, mask_r=None, dimension=2, title=''):
         """
         Plot the wavefront of light field using matplotlib.
