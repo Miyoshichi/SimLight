@@ -31,7 +31,7 @@ class ZernikeCofficients:
 
         self._j = j
         self._input_cofficients = cofficients
-        self._n, self._m = self.__order(self._j)
+        self._n, self._m, self._norm = self.__order(self._j)
         self._cofficients = self.__cofficients(self._j,
                                                self._input_cofficients)
 
@@ -39,15 +39,17 @@ class ZernikeCofficients:
     def __order(j):
         n = np.zeros(j, dtype=int)
         m = np.zeros(j, dtype=int)
+        norm = np.zeros(j)
         for i in range(1, j):
             n[i] = math.ceil((np.sqrt(8 * (i + 1) + 1) - 1) / 2 - 1)
+            norm[i] = 1 / np.sqrt(n[i] + 1)
             if n[i] > n[i-1]:
                 m[i] = -n[i]
             elif i == ((n[i] + 1) * (n[i] + 2)) / 2:
                 m[i] = n[i]
             else:
                 m[i] = m[i-1] + 2
-        return n, m
+        return n, m, norm
 
     @staticmethod
     def __cofficients(j, input_cofficients):
@@ -68,6 +70,10 @@ class ZernikeCofficients:
     @property
     def m(self):
         return self._m
+
+    @property
+    def norm(self):
+        return self._norm
 
     @property
     def input_cofficients(self):

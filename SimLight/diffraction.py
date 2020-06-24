@@ -111,7 +111,6 @@ def fresnel2(field, z):
         field: tuple
             The diffracted light field.
     """
-    print('Frenesl')
     field.complex_amp *= np.exp(1j / z)
     field.complex_amp = np.fft.fftshift(np.fft.fft2(field.complex_amp))
 
@@ -131,7 +130,6 @@ def fraunhofer(field, z):
         field: tuple
             The diffracted light field.
     """
-    print('Fraunhofer')
     field.complex_amp *= np.exp(1j / z)
     field.complex_amp = 1j * np.exp(1j * 2 * np.pi / field.wavelength * z) /\
         field.wavelength / z *\

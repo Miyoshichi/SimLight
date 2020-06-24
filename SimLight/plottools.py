@@ -41,25 +41,38 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         if dimension < 1 or dimension > 3 or type(dimension) is not int:
             raise ValueError('Invalid dimension.')
     if isinstance(field, sl.Field) is True:
+        wavelength = field.wavelength
         size = field.size
-        phase_ = phase(field, unwrap=True)
         N = field.N
+        phase_ = phase(field, unwrap=True)
     elif isinstance(field, list) is True:
-        size = field[0]
-        phase_ = phase(field[1], unwrap=True)
+        wavelength = field[0]
+        size = field[1]
         N = field[2]
+        phase_ = phase(field[3], unwrap=True)
     else:
         raise ValueError('Invalid light field.')
 
+    phase_ = wavelength * phase_ / (2 * np.pi)
+
     fig = plt.figure()
+
+    if mask_r:
+        _, _, norm_radius = circle_aperature(phase_, mask_r)
+        max_value = np.max(phase_[norm_radius <= mask_r])
+        min_value = np.min(phase_[norm_radius <= mask_r])
+    else:
+        max_value = np.max(phase_)
+        min_value = np.min(phase_)
 
     if dimension == 2:
         extent = [-size / 2, size / 2, -size / 2, size / 2]
         ax = fig.add_subplot(111)
-        im = ax.imshow(phase_, cmap='rainbow', extent=extent)
+        im = ax.imshow(phase_, cmap='rainbow', extent=extent,
+                       vmin=min_value, vmax=max_value)
         if mask_r:
             mask = patches.Circle([0, 0], size * mask_r / 2,
-                                  fc='none', ec='none')
+                                  fc='none', ec='none',)
             ax.add_patch(mask)
             im.set_clip_path(mask)
         fig.colorbar(im)
@@ -68,19 +81,13 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         length = np.linspace(-size / 2, size / 2, phase_.shape[0])
         X, Y = np.meshgrid(length, length)
         if mask_r:
-            _, _, norm_radius = circle_aperature(phase_, mask_r)
             radius = np.sqrt(X**2 + Y**2)
             X[radius > size * mask_r / 2] = np.nan
             Y[radius > size * mask_r / 2] = np.nan
-            max_value = np.max(phase_[norm_radius <= mask_r])
-            min_value = np.min(phase_[norm_radius <= mask_r])
-        else:
-            max_value = np.max(phase_)
-            min_value = np.min(phase_)
         stride = math.ceil(N / 25)
         im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
                              cmap='rainbow', vmin=min_value, vmax=max_value)
-        ax.set_zlabel('Wavefront [rad]')
+        ax.set_zlabel('Wavefront [λ]')
         fig.colorbar(im)
     else:
         ax = fig.add_subplot(111)
@@ -94,7 +101,7 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
             X = np.linspace(-size / 2, size / 2, phase_.shape[0])
             im = ax.plot(X, phase_[center])
         ax.set_xlabel('Size [mm]')
-        ax.set_ylabel('Phase [rad]')
+        ax.set_ylabel('Phase [λ]')
 
     if title:
         ax.set_title(title)
@@ -171,7 +178,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
     plt.show()
 
 
-def plot_psf(field, aperture_type='circle', title=''):
+def plot_psf(field, aperture_type='circle', dimension=2, title=''):
     """
     Show the figure of point spread function of a light field.
 
@@ -182,6 +189,10 @@ def plot_psf(field, aperture_type='circle', title=''):
             The shape of the aperture. (optional, default is 'circle')
                 circle: circle aperture
                 square: square aperture
+        dimension: int
+            Dimension of figure. (optional, default is 2, i.e. surface)
+            1: line
+            2: surface
         title: str
             Title of the figure. (optional).
     """
@@ -195,11 +206,16 @@ def plot_psf(field, aperture_type='circle', title=''):
     else:
         raise ValueError('Invalid light field.')
 
-    extent = [-size / 2, size / 2, -size / 2, size / 2]
-
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    im = ax.imshow(psf_, cmap='rainbow', extent=extent, vmin=0)
+    if dimension == 2:
+        extent = [-1, 1, -1, 1]
+        im = ax.imshow(psf_, cmap='rainbow', extent=extent, vmin=0)
+    else:
+        center = int(psf_.shape[0] / 2)
+        X = np.linspace(-size / 2, size / 2, psf_.shape[0])
+        im = ax.plot(X, psf_[center])
+        ax.set_ylabel('Intensity [a.u.]')
 
     if title:
         ax.set_title(title)

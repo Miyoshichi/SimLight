@@ -90,6 +90,9 @@ def psf(field, aperture_type='circle'):
     N = field.N
     size = field.size
     complex_amp = field.complex_amp
+    _fftargs = {'planner_effort': 'FFTW_ESTIMATE',
+                'overwrite_input': True,
+                'threads': -1}
 
     if aperture_type is 'circle':
         x = np.linspace(-size / 2, size / 2, N)
@@ -98,7 +101,7 @@ def psf(field, aperture_type='circle'):
         r = np.sqrt(2 * (size)**2)
         complex_amp[R >= r] = 0
 
-    psf = np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(complex_amp))))**2
+    psf = np.abs(np.fft.fftshift(np.fft.fft2(complex_amp)))**2
     psf /= np.max(psf)
     return psf
 
@@ -120,7 +123,9 @@ def aberration(field, zernike):
     size = field.size
     k = 2 * np.pi / field.wavelength
     n = zernike.n
-    m = abs(zernike.m)
+    m = zernike.m
+    norm = zernike.norm
+    m_abs = abs(m)
     j = zernike.j
     coeff = zernike.cofficients / (size / 2)
 
@@ -130,8 +135,8 @@ def aberration(field, zernike):
     theta = np.arctan2(Y, X)
 
     # R_(n, m)(rho) = sum(k = 0 -> (n - m)/2): r_(n, m)(k) * rho(n, k)
-    n_minus_m_half = (n - m) / 2
-    n_plus_m_half = (n + m) / 2
+    n_minus_m_half = (n - m_abs) / 2
+    n_plus_m_half = (n + m_abs) / 2
     r = np.zeros((j, int(max(n_minus_m_half)) + 1))
     rho_exp = np.zeros((j, int(max(n_minus_m_half)) + 1), dtype=int)
     R = np.zeros((j, N, N))
@@ -146,13 +151,13 @@ def aberration(field, zernike):
     Z = np.zeros((j, N, N))
     for i in range(j):
         if m[i] < 0:
-            Z[:][:][i] = R[:][:][i] * np.sin(m[i] * theta)
+            Z[:][:][i] = R[:][:][i] * np.sin(m_abs[i] * theta)
         else:
-            Z[:][:][i] = R[:][:][i] * np.cos(m[i] * theta)
+            Z[:][:][i] = R[:][:][i] * np.cos(m_abs[i] * theta)
     # W(y, x) = zernike_coeff * Z
     phi = np.zeros((N, N))
     for i in range(j):
-        phi += coeff[i] * Z[:][:][i]
+        phi += coeff[i] * Z[:][:][i] * norm[i]
 
     varphi = -k * phi
     field.complex_amp *= np.exp(1j * varphi)

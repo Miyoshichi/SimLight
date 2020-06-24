@@ -73,7 +73,7 @@ class Field:
         mask_r = mask_r
         dimension = dimension
         title = title
-        field = [self._size, self._complex_amp, self._N]
+        field = [self._wavelength, self._size, self._N, self._complex_amp]
         plot_wavefront(field, mask_r, dimension, title)
 
     def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, title=''):

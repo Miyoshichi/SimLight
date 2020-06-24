@@ -103,6 +103,6 @@ def near_field_propagation(field, lens, z):
     field.complex_amp *= np.exp(1j * phi)
     # complex amplitude passing the distance z
     if z != 0:
-        field = fraunhofer(field, z)
+        field = fresnel(field, z)
 
     return field
