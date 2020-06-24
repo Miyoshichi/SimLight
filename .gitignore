@@ -1,9 +1,15 @@
+# editor folders
 .idea/
 .vscode/
+
+# build folders
 SimLight.egg-info/
-__pycache__/
 dist/
 build/
 
+# cache
+__pycache__/
 *.pyc
-*.ipynb
+
+# dev files
+dev.*
