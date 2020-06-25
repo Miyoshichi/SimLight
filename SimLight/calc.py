@@ -90,9 +90,6 @@ def psf(field, aperture_type='circle'):
     N = field.N
     size = field.size
     complex_amp = field.complex_amp
-    _fftargs = {'planner_effort': 'FFTW_ESTIMATE',
-                'overwrite_input': True,
-                'threads': -1}
 
     if aperture_type is 'circle':
         x = np.linspace(-size / 2, size / 2, N)
@@ -129,7 +126,8 @@ def aberration(field, zernike):
     j = zernike.j
     coeff = zernike.cofficients / (size / 2)
 
-    x = np.linspace(-size / 2, size / 2, N)
+    x = np.linspace(-size / 25.4, size / 25.4, N)
+    # x = np.linspace(-1, 1, N)
     X, Y = np.meshgrid(x, x)
     rho = np.sqrt(X**2 + Y**2)
     theta = np.arctan2(Y, X)
@@ -157,7 +155,7 @@ def aberration(field, zernike):
     # W(y, x) = zernike_coeff * Z
     phi = np.zeros((N, N))
     for i in range(j):
-        phi += coeff[i] * Z[:][:][i] * norm[i]
+        phi = phi + coeff[i] * Z[:][:][i]
 
     varphi = -k * phi
     field.complex_amp *= np.exp(1j * varphi)

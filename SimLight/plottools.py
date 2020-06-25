@@ -33,6 +33,8 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         title: str
             Title of the figure. (optional).
     """
+    unwrap = True
+
     # check of input parameters
     if mask_r:
         if mask_r > 1 or mask_r < 0:
@@ -44,12 +46,12 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         wavelength = field.wavelength
         size = field.size
         N = field.N
-        phase_ = phase(field, unwrap=True)
+        phase_ = phase(field, unwrap=unwrap)
     elif isinstance(field, list) is True:
         wavelength = field[0]
         size = field[1]
         N = field[2]
-        phase_ = phase(field[3], unwrap=True)
+        phase_ = phase(field[3], unwrap=unwrap)
     else:
         raise ValueError('Invalid light field.')
 
@@ -64,6 +66,9 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
     else:
         max_value = np.max(phase_)
         min_value = np.min(phase_)
+
+    PV = 'P-V: ' + str(round(pv(phase_), 3)) + ' λ'
+    RMS = 'RMS: ' + str(round(rms(phase_), 3)) + ' λ'
 
     if dimension == 2:
         extent = [-size / 2, size / 2, -size / 2, size / 2]
@@ -88,6 +93,10 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
                              cmap='rainbow', vmin=min_value, vmax=max_value)
         ax.set_zlabel('Wavefront [λ]')
+        ax.text2D(0.00, 0.95, PV, fontsize=12, horizontalalignment='left',
+                  transform=ax.transAxes)
+        ax.text2D(0.00, 0.90, RMS, fontsize=12, horizontalalignment='left',
+                  transform=ax.transAxes)
         fig.colorbar(im)
     else:
         ax = fig.add_subplot(111)

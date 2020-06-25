@@ -13,12 +13,19 @@ def main():
     size = 25.4
     res = 200
     f = 50
+    A = 1
 
-    F = sl.SphericalWave(wavelength, size, res, 10)
+    F = sl.PlaneWave(wavelength, size, res)
+    Z = sl.zernike.ZernikeCofficients(15)
+    # Z.cofficients[3] = 0.1 * A
+    Z.cofficients[8] = 0.02 * A
+    # Z.cofficients[8] = 0.01 * A
     L = sl.Lens.new_lens(size, f)
 
-    F = sl.near_field_propagation(F, L, 10)
-    F.plot_wavefront(dimension=3, title=F.field_type)
+    F, phi = sl.aberration(F, Z)
+    F.plot_wavefront(dimension=3, mask_r=1)
+
+    F = sl.near_field_propagation(F, L, f)
 
 
 if __name__ == '__main__':
