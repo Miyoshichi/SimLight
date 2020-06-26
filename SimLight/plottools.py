@@ -63,12 +63,13 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         _, _, norm_radius = circle_aperature(phase_, mask_r)
         max_value = np.max(phase_[norm_radius <= mask_r])
         min_value = np.min(phase_[norm_radius <= mask_r])
+        PV = 'P-V: ' + str(round(pv(phase_, mask=True), 3)) + ' λ'
+        RMS = 'RMS: ' + str(round(rms(phase_, mask=True), 3)) + ' λ'
     else:
         max_value = np.max(phase_)
         min_value = np.min(phase_)
-
-    PV = 'P-V: ' + str(round(pv(phase_), 3)) + ' λ'
-    RMS = 'RMS: ' + str(round(rms(phase_), 3)) + ' λ'
+        PV = 'P-V: ' + str(round(pv(phase_), 3)) + ' λ'
+        RMS = 'RMS: ' + str(round(rms(phase_), 3)) + ' λ'
 
     if dimension == 2:
         extent = [-size / 2, size / 2, -size / 2, size / 2]
@@ -80,6 +81,10 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
                                   fc='none', ec='none',)
             ax.add_patch(mask)
             im.set_clip_path(mask)
+        ax.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
+                transform=ax.transAxes)
+        ax.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
+                transform=ax.transAxes)
         fig.colorbar(im)
     elif dimension == 3:
         ax = fig.add_subplot(111, projection='3d')

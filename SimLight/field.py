@@ -6,6 +6,7 @@ Created on May 21, 2020
 """
 
 import math
+import copy
 import numpy as np
 
 from .plottools import plot_wavefront, plot_intensity
@@ -103,6 +104,21 @@ class Field:
         field = [self._size, self._complex_amp]
         plot_intensity(field, mask_r, norm_type, dimension, title)
 
+    @classmethod
+    def copy(cls, field):
+        """
+        Create a copy of the input light field so that the original field
+        would not be changed.
+
+        Args:
+            field: tuple
+                Input light field to copy.
+        Returns:
+            coppied_field: tuple
+                A new copied light field.
+        """
+        return copy.deepcopy(field)
+
     @property
     def wavelength(self):
         return self._wavelength
@@ -111,9 +127,17 @@ class Field:
     def size(self):
         return self._size
 
+    @size.setter
+    def size(self, size):
+        self._size = size
+
     @property
     def N(self):
         return self._N
+
+    @N.setter
+    def N(self, N):
+        self._N = N
 
     @property
     def complex_amp(self):

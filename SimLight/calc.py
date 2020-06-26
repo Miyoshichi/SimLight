@@ -116,6 +116,8 @@ def aberration(field, zernike):
         aberrated_field: tuple
             The aberrated light field.
     """
+    field = sl.Field.copy(field)
+
     N = field.N
     size = field.size
     k = 2 * np.pi / field.wavelength
@@ -124,10 +126,11 @@ def aberration(field, zernike):
     norm = zernike.norm
     m_abs = abs(m)
     j = zernike.j
-    coeff = zernike.cofficients / (size / 2)
+    coeff = zernike.cofficients
 
-    x = np.linspace(-size / 25.4, size / 25.4, N)
-    # x = np.linspace(-1, 1, N)
+    # x = np.linspace(-size, size, N)
+    # x = np.linspace(-size / 25.4, size / 25.4, N)
+    x = np.linspace(-1, 1, N)
     X, Y = np.meshgrid(x, x)
     rho = np.sqrt(X**2 + Y**2)
     theta = np.arctan2(Y, X)
@@ -155,7 +158,7 @@ def aberration(field, zernike):
     # W(y, x) = zernike_coeff * Z
     phi = np.zeros((N, N))
     for i in range(j):
-        phi = phi + coeff[i] * Z[:][:][i]
+        phi = phi + coeff[i] * Z[:][:][i] * norm[i]
 
     varphi = -k * phi
     field.complex_amp *= np.exp(1j * varphi)

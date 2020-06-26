@@ -9,34 +9,48 @@ import math
 import numpy as np
 
 
-def pv(surface):
+def pv(phase, mask=False):
     """
     Calculate the PV(peek to valley) value of a wavefront.
 
     Args:
-        wavefront:
+        phase:
             Wavefront to be calculated.
     Returns:
         pv:
             The PV value of input wavefront.
     """
-    pv = np.nanmax(surface) - np.nanmin(surface)
+    if mask is True:
+        x = np.linspace(-1, 1, phase.shape[0])
+        X, Y = np.meshgrid(x, x)
+        R = np.sqrt(X**2 + Y**2)
+        phase[R > 1] = np.nan
+
+    pv = np.nanmax(phase) - np.nanmin(phase)
     return pv
 
 
-def rms(surface):
+def rms(phase, mask=False):
     """
     Calculate the RMS(root mean square) value of a wavefront.
 
     Args:
-        wavefront:
+        phase:
             Wavefront to be calculated.
     Returns:
         pv:
             The RMS value of input wavefront.
     """
-    deviation = np.nansum((surface - np.nanmean(surface))**2)
-    rms = math.sqrt(deviation / surface.size)
+    size = phase.size
+    if mask is True:
+        x = np.linspace(-1, 1, phase.shape[0])
+        X, Y = np.meshgrid(x, x)
+        R = np.sqrt(X**2 + Y**2)
+        phase[R > 1] = np.nan
+        size = np.pi * phase.size / 4
+
+    deviation = np.nansum((phase - np.nanmean(phase))**2)
+    rms = math.sqrt(deviation / size)
     return rms
 
 

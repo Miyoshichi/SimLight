@@ -42,7 +42,7 @@ class ZernikeCofficients:
         norm = np.zeros(j)
         for i in range(1, j):
             n[i] = math.ceil((np.sqrt(8 * (i + 1) + 1) - 1) / 2 - 1)
-            norm[i] = 1 / np.sqrt(n[i] + 1)
+            norm[i] = np.sqrt(2 * (n[i] + 1))
             if n[i] > n[i-1]:
                 m[i] = -n[i]
             elif i == ((n[i] + 1) * (n[i] + 2)) / 2:

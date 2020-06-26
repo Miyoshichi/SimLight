@@ -13,3 +13,9 @@ __pycache__/
 
 # dev files
 dev.*
+
+# images
+*.jpeg
+*.jpg
+*.pdf
+*png
