@@ -7,6 +7,7 @@ Created on June 23, 2020
 
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class ZernikeCofficients:
@@ -58,6 +59,16 @@ class ZernikeCofficients:
             order = len(input_cofficients)
             cofficients[:order] = input_cofficients
         return cofficients
+
+    def show_coefficients(self):
+        """
+        Show the Zernike coefficients in figure.
+        """
+        terms = range(1, self._j + 1)
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.spines['bottom'].set_position(('data', 0))
+        ax.bar(terms, self._cofficients, tick_label=terms)
 
     @property
     def j(self):
