@@ -19,3 +19,7 @@ dev.*
 *.jpg
 *.pdf
 *png
+
+# dist files
+*.whl
+*.tar.gz

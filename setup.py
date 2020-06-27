@@ -11,6 +11,7 @@ setup(
     name='SimLight',
     description='A tool helps your optical simulation.',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     license='MIT License',
     version=__version__,
     author='Miyoshichi',
