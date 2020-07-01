@@ -9,6 +9,9 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+import SimLight as sl
+import SimLight.plottools as slpl
+
 
 class ZernikeCofficients:
     """
@@ -55,7 +58,8 @@ class ZernikeCofficients:
     @staticmethod
     def __cofficients(j, input_cofficients):
         cofficients = np.zeros(j)
-        if input_cofficients:
+        if (input_cofficients is not []
+                or (input_cofficients - cofficients).any() is True):
             order = len(input_cofficients)
             cofficients[:order] = input_cofficients
         return cofficients
@@ -69,6 +73,20 @@ class ZernikeCofficients:
         ax = fig.add_subplot(111)
         ax.spines['bottom'].set_position(('data', 0))
         ax.bar(terms, self._cofficients, tick_label=terms)
+
+    def shwo_psf(self):
+        """
+        Show the figure of point spread function of a Zernike polynimials
+        defined surface which the default parameters are 0.633 µm of
+        wavelength, 25.4 mm of size and 500 pixels of N (grid number).
+        """
+        wavelength = 0.633
+        size = 25.4
+        N = 500
+        field = sl.PlaneWave(wavelength, size, N)
+        zernike = ZernikeCofficients(self._j, self._cofficients)
+        aber = sl.calc.aberration(field, zernike)
+        slpl.plot_psf(aber)
 
     @property
     def j(self):

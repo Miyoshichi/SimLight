@@ -86,20 +86,38 @@ def psf(field, aperture_type='circle'):
         psf:
             Point spread function of the input light field.
     """
+    field = sl.Field.copy(field)
 
     N = field.N
     size = field.size
     complex_amp = field.complex_amp
+    upper = 0
+    lower = N - 1
+
+    size_mag = size / 25.4
+    N_mag = N / 100
 
     if aperture_type is 'circle':
         x = np.linspace(-size / 2, size / 2, N)
         X, Y = np.meshgrid(x, x)
         R = np.sqrt(X**2 + Y**2)
-        r = np.sqrt(2 * (size)**2)
+        r = size / 2
         complex_amp[R >= r] = 0
+
+    psf_N = int(N * (N_mag / size_mag) / 2) * 2
+    if psf_N > N:
+        complex_amp_bigger = np.zeros([psf_N, psf_N], dtype=complex)
+        upper = int((psf_N - N) / 2)
+        lower = upper + N
+        complex_amp_bigger[upper:lower, upper:lower] = complex_amp
+        complex_amp = complex_amp_bigger
+        N = psf_N
+        size *= N_mag / size_mag
 
     psf = np.abs(np.fft.fftshift(np.fft.fft2(complex_amp)))**2
     psf /= np.max(psf)
+    psf = psf[upper:lower, upper:lower]
+
     return psf
 
 
