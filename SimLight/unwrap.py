@@ -23,3 +23,8 @@ def simple_unwrap(phase):
     """
     unwrapped_phase = np.unwrap(np.unwrap(phase), axis=0)
     return unwrapped_phase
+
+
+def simple_unwrap_1d(phase):
+    unwrapped_phase = np.unwrap(phase)
+    return unwrapped_phase

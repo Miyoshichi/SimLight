@@ -13,7 +13,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import SimLight as sl
 from .utils import pv, rms, circle_aperature
-from .calc import phase, intensity, psf
+from .calc import phase, intensity, psf, delta_wavefront
+from .unwrap import simple_unwrap_1d
 
 
 def plot_wavefront(field, mask_r=None, dimension=2, title=''):
@@ -224,12 +225,56 @@ def plot_psf(field, aperture_type='circle', dimension=2, title=''):
     ax = fig.add_subplot(111)
     if dimension == 2:
         extent = [-1, 1, -1, 1]
-        im = ax.imshow(psf_, cmap='rainbow', extent=extent, vmin=0)
+        im = ax.imshow(psf_, cmap='gist_gray', extent=extent, vmin=0)
     else:
         center = int(psf_.shape[0] / 2)
         X = np.linspace(-size / 2, size / 2, psf_.shape[0])
         im = ax.plot(X, psf_[center])
         ax.set_ylabel('Intensity [a.u.]')
+
+    if title:
+        ax.set_title(title)
+
+    plt.show()
+
+
+def plot_longitude(lens, title=''):
+    """
+    Show the graph of the longitude aberration acrroding to the
+    Sidel coefficients.
+    """
+    # default parameters
+    wavelength = 0.6328
+    size = lens.D
+    N = 1000
+    f = lens.f
+    center = int(N / 2)
+
+    field = sl.PlaneWave(wavelength, size, N)
+    sidel = sl.zernike.SidelCoefficients(lens.sidel)
+    delta_W = sl.delta_wavefront(field, sidel)
+    delta_W *= wavelength * 1e-3 / (2 * np.pi)
+
+    x = np.linspace(-size / 2, size / 2, N)
+    height = x[center:]
+    delta_W_line = delta_W[center, center:]
+    longitude = delta_W_line * -(f / (size / 2))**2
+
+    fig = plt.figure(figsize=(2, 6))
+    ax = fig.add_subplot(111)
+    im = ax.plot(longitude, height)
+
+    if np.abs(np.max(longitude)) > np.abs(np.min(longitude)):
+        max_value = np.abs(np.max(longitude) * 2.5)
+    else:
+        max_value = np.abs(np.min(longitude) * 2.5)
+    ax.spines['top'].set_color('none')
+    ax.spines['bottom'].set_position(('data', 0))
+    ax.spines['left'].set_position(('data', 0))
+    ax.spines['right'].set_color('none')
+    ax.set_xlim((-max_value, max_value))
+    ax.set_xlabel('Longitude aberration [mm]')
+    ax.set_ylabel('Size [mm]', rotation=0, position=(0, 1.01), labelpad=-20)
 
     if title:
         ax.set_title(title)

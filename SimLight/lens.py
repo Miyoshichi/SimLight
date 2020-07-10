@@ -5,6 +5,10 @@ Created on June 15, 2020
 @author: Zhou Xiang
 """
 
+import numpy as np
+
+from .utils import zernike_to_sidel
+
 
 class Lens:
     """
@@ -18,7 +22,7 @@ class Lens:
     """
     counts = 0
 
-    def __init__(self, D, f=float('inf')):
+    def __init__(self, D, f=float('inf'), coeff=[]):
         """
         A fundmental lens which is central symmetry.
 
@@ -27,6 +31,8 @@ class Lens:
                 Physical size (diameter) of lens, unit: mm.
             f: float
                 Focal length of lens.
+            abbr: float
+                Zernike coefficients of the lens's aberration.
         """
         # check of inputted parameters
         if D <= 0:
@@ -37,15 +43,28 @@ class Lens:
         Lens.counts += 1
         self._D = D
         self._f = f
+        self._coeff = coeff
+        self._zernike, self._sidel = self.__coefficients(self._coeff)
         self._lens_number = Lens.counts
         self._lens_type = 'lens'
         self._F = self.__F_number(self._D, self._f)
 
     @classmethod
-    def new_lens(cls, D, f):
+    def new_lens(cls, D, f=float('inf'), coeff=[]):
         # cls.counts += 1
-        inst = cls(D, f)
-        return inst
+        lens = cls(D, f, coeff)
+        return lens
+
+    @staticmethod
+    def __coefficients(coeff):
+        zernike = np.zeros(15)
+        if coeff is not []:
+            j = len(coeff)
+            if j > 15:
+                raise ValueError('Unspported geometrical aberration.')
+            zernike[:j] = coeff
+        sidel = zernike_to_sidel(zernike)
+        return zernike, sidel
 
     @staticmethod
     def __F_number(D, f):
@@ -71,6 +90,25 @@ class Lens:
     @property
     def f(self):
         return self._f
+
+    @property
+    def coeff(self):
+        return self._coeff
+
+    @property
+    def zernike(self):
+        return self._zernike
+
+    @property
+    def sidel(self):
+        return self._sidel
+
+    @coeff.setter
+    @zernike.setter
+    @sidel.setter
+    def coeff(self, coeff):
+        self._coeff = coeff
+        self._zernike, self._sidel = self.__coefficients(self._coeff)
 
     @property
     def lens_number(self):
@@ -99,7 +137,7 @@ class CylindricalLens(Lens):
             0: x direction
             1: y direction
     """
-    def __init__(self, D, f, direction=0):
+    def __init__(self, D, f, aber, direction=0):
         """
         A cylindrical lens.
 
@@ -108,20 +146,22 @@ class CylindricalLens(Lens):
                 Physical size of the lens, unit: mm.
             f: float
                 Focal length of a lens.
+            abbr: float
+                Zernike coefficients of the lens's aberration.
             direction: int
                 Direction of curve. (optional, default is 0.)
                 0: x direction (horizontal)
                 1: y direction (vertical)
         """
-        super().__init__(D, f)
+        super().__init__(D, f, aber)
         self._lens_type = 'cylindrical lens'
         self._direction = direction
 
     @classmethod
-    def new_lens(cls, D, f, direction=0):
+    def new_lens(cls, D, f, aber, direction=0):
         # Lens.counts += 1
-        inst = cls(D, f, direction)
-        return inst
+        cylindrical_lens = cls(D, f, aber, direction)
+        return cylindrical_lens
 
     @property
     def lens_type(self):

@@ -13,19 +13,19 @@ import SimLight as sl
 import SimLight.plottools as slpl
 
 
-class ZernikeCofficients:
+class ZernikeCoefficients:
     """
-    Return a list of Zernike Polynomials cofficients.
+    Return a list of Zernike polynomials cofficients.
 
     Args:
         j: int
-            The terms of Zernike Polynomials
-        cofficients: list
+            The terms of Zernike polynomials
+        coefficients: list
             Predefined cofficients. (optional, default is void.)
     """
-    def __init__(self, j, cofficients=[]):
+    def __init__(self, j, coefficients=[]):
         """
-        Return a list of Zernike Polynomials cofficients.
+        Return a list of Zernike polynomials cofficients.
         """
         # check of input parameters:
         if j <= 0:
@@ -34,10 +34,8 @@ class ZernikeCofficients:
             raise ValueError('The order should be int type')
 
         self._j = j
-        self._input_cofficients = cofficients
         self._n, self._m, self._norm = self.__order(self._j)
-        self._cofficients = self.__cofficients(self._j,
-                                               self._input_cofficients)
+        self._coefficients = self.__zernike_coefficients(j, coefficients)
 
     @staticmethod
     def __order(j):
@@ -53,16 +51,18 @@ class ZernikeCofficients:
                 m[i] = n[i]
             else:
                 m[i] = m[i-1] + 2
+            if m[i] == 0:
+                norm[i] /= np.sqrt(2)
         return n, m, norm
 
     @staticmethod
-    def __cofficients(j, input_cofficients):
-        cofficients = np.zeros(j)
-        if (input_cofficients is not []
-                or (input_cofficients - cofficients).any() is True):
-            order = len(input_cofficients)
-            cofficients[:order] = input_cofficients
-        return cofficients
+    def __zernike_coefficients(j, input_coefficients):
+        coefficients = np.zeros(j)
+        if (input_coefficients is not []
+                or (input_coefficients - coefficients).any() is True):
+            order = len(input_coefficients)
+            coefficients[:order] = input_coefficients
+        return coefficients
 
     def show_coefficients(self):
         """
@@ -72,7 +72,7 @@ class ZernikeCofficients:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.spines['bottom'].set_position(('data', 0))
-        ax.bar(terms, self._cofficients, tick_label=terms)
+        ax.bar(terms, self._coefficients, tick_label=terms)
 
     def shwo_psf(self):
         """
@@ -80,11 +80,13 @@ class ZernikeCofficients:
         defined surface which the default parameters are 0.633 µm of
         wavelength, 25.4 mm of size and 500 pixels of N (grid number).
         """
-        wavelength = 0.633
+        # default parameters
+        wavelength = 0.6328
         size = 25.4
         N = 500
+
         field = sl.PlaneWave(wavelength, size, N)
-        zernike = ZernikeCofficients(self._j, self._cofficients)
+        zernike = ZernikeCoefficients(self._j, self._coefficients)
         aber = sl.calc.aberration(field, zernike)
         slpl.plot_psf(aber)
 
@@ -105,13 +107,47 @@ class ZernikeCofficients:
         return self._norm
 
     @property
-    def input_cofficients(self):
-        return self._input_cofficients
+    def coefficients(self):
+        return self._coefficients
+
+    @coefficients.setter
+    def coefficients(self, coefficients):
+        self._coefficients = coefficients
+
+
+class SidelCoefficients:
+    """
+    Return a list of Sidel Polynomials cofficients.
+
+    Args:
+        coefficients: list, [magnitude, angle]
+            Predefined cofficients. (optional, default is void.)
+    """
+    def __init__(self, coefficients=[]):
+        """
+        Return a list of Sidel polynomials cofficients.
+        """
+        self._coefficients = self.__sidel_coefficients(coefficients)
+
+    @staticmethod
+    def __sidel_coefficients(input_coefficients):
+        if len(input_coefficients) > 6:
+            raise ValueError('Sidel polynomials coefficients cannot be '
+                             'larger than 6.')
+        coefficients = np.zeros((6, 2))
+        if (input_coefficients is not []
+                or (input_coefficients - coefficients).any() is True):
+            order = len(input_coefficients)
+            coefficients[:order] = input_coefficients
+        return coefficients
+
+    def show_surface(self):
+        pass
 
     @property
-    def cofficients(self):
-        return self._cofficients
+    def coefficients(self):
+        return self._coefficients
 
-    @cofficients.setter
-    def cofficients(self, cofficients):
-        self._cofficients = cofficients
+    @coefficients.setter
+    def coefficients(self, coefficients):
+        self._coefficients = coefficients

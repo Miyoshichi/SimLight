@@ -123,7 +123,7 @@ def psf(field, aperture_type='circle'):
 
 def aberration(field, zernike):
     """
-    Return a aberrated light field due to the input zernike cofficients.
+    Return a aberrated light field due to the input Zernike cofficients.
 
     Args:
         field: tuple
@@ -144,7 +144,7 @@ def aberration(field, zernike):
     norm = zernike.norm
     m_abs = abs(m)
     j = zernike.j
-    coeff = zernike.cofficients
+    coeff = zernike.coefficients
 
     # x = np.linspace(-size, size, N)
     # x = np.linspace(-size / 25.4, size / 25.4, N)
@@ -182,3 +182,77 @@ def aberration(field, zernike):
     field.complex_amp *= np.exp(1j * varphi)
 
     return field
+
+
+def sidel_aberration(field, sidel):
+    """
+    Return a aberrated light field due to the input Sidel cofficients.
+
+    Args:
+        field: tuple
+            The light field to be calculated.
+        sidel: tuple
+            The Sernike Polynomials.
+    Returns:
+        aberrated_field: tuple
+            The aberrated light field.
+    """
+    field = sl.Field.copy(field)
+
+    N = field.N
+    k = 2 * np.pi / field.wavelength
+    W = sidel.coefficients
+
+    x = np.linspace(-1, 1, N)
+    X, Y = np.meshgrid(x, x)
+    rho = np.sqrt(X**2 + Y**2)
+    theta = np.arctan2(Y, X)
+    h = 1
+    rad = np.pi / 180
+
+    piston = W[0][0] * h**2
+    tilt = W[1][0] * h * rho * np.cos(theta - W[1][1] * rad)
+    defocus = W[2][0] * rho**2
+    astigmatism = W[3][0] * h**2 * rho**2 * np.cos(theta - W[3][1] * rad)**2
+    coma = W[4][0] * h * rho**3 * np.cos(theta - W[4][1] * rad)
+    spherical = W[5][0] * rho**4
+    surface = piston + tilt + defocus + astigmatism + coma + spherical
+
+    varphi = k * surface
+    field.complex_amp *= np.exp(-1j * varphi)
+
+    return field
+
+
+def delta_wavefront(field, sidel):
+    """
+    Return the longitude aberration of input light field.
+    """
+    field = sl.Field.copy(field)
+
+    size = field.size
+    N = field.N
+    k = 2 * np.pi / field.wavelength
+    W = sidel.coefficients
+
+    x = np.linspace(-1, 1, N)
+    X, Y = np.meshgrid(x, x)
+    rho = np.sqrt(X**2 + Y**2)
+    theta = np.arctan2(Y, X)
+    h = 1
+    rad = np.pi / 180
+
+    piston = 0
+    tilt = W[1][0] * h * (np.cos(theta - W[1][1] * rad) -
+                          rho * np.sin(theta))
+    defocus = 2 * W[2][0] * rho * 0
+    astigmatism = W[3][0] * h**2 * (2 * rho * np.cos(theta - W[3][1] * rad)**2
+                                    - rho**2 * np.sin(theta))
+    coma = W[4][0] * h * (3 * rho**2 * np.cos(theta - W[4][1] * rad) -
+                          rho**3 * np.sin(2 * theta))
+    spherical = 3 * W[5][0] * rho**3
+
+    delta_W = piston + tilt + defocus + astigmatism + coma + spherical
+    delta_W *= k
+
+    return delta_W
