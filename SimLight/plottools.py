@@ -226,6 +226,7 @@ def plot_psf(field, aperture_type='circle', dimension=2, title=''):
     if dimension == 2:
         extent = [-1, 1, -1, 1]
         im = ax.imshow(psf_, cmap='gist_gray', extent=extent, vmin=0)
+        fig.colorbar(im)
     else:
         center = int(psf_.shape[0] / 2)
         X = np.linspace(-size / 2, size / 2, psf_.shape[0])
@@ -238,13 +239,12 @@ def plot_psf(field, aperture_type='circle', dimension=2, title=''):
     plt.show()
 
 
-def plot_longitude(lens, title=''):
+def plot_longitude(lens, wavelength=0.550, title=''):
     """
-    Show the graph of the longitude aberration acrroding to the
+    Show the graph of the longitudinal aberration acrroding to the
     Sidel coefficients.
     """
     # default parameters
-    wavelength = 0.6328
     size = lens.D
     N = 1000
     f = lens.f

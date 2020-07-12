@@ -74,17 +74,12 @@ class ZernikeCoefficients:
         ax.spines['bottom'].set_position(('data', 0))
         ax.bar(terms, self._coefficients, tick_label=terms)
 
-    def shwo_psf(self):
+    def show_psf(self, wavelength=0.6328, size=25.4, N=500):
         """
         Show the figure of point spread function of a Zernike polynimials
-        defined surface which the default parameters are 0.633 µm of
+        defined surface which the default parameters are 0.6328 µm of
         wavelength, 25.4 mm of size and 500 pixels of N (grid number).
         """
-        # default parameters
-        wavelength = 0.6328
-        size = 25.4
-        N = 500
-
         field = sl.PlaneWave(wavelength, size, N)
         zernike = ZernikeCoefficients(self._j, self._coefficients)
         aber = sl.calc.aberration(field, zernike)
@@ -135,8 +130,9 @@ class SidelCoefficients:
             raise ValueError('Sidel polynomials coefficients cannot be '
                              'larger than 6.')
         coefficients = np.zeros((6, 2))
-        if (input_coefficients is not []
-                or (input_coefficients - coefficients).any() is True):
+        # if (input_coefficients != []
+        # or (input_coefficients - coefficients).any() is True):
+        if input_coefficients != []:
             order = len(input_coefficients)
             coefficients[:order] = input_coefficients
         return coefficients

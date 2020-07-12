@@ -60,7 +60,7 @@ def propagation(field, lens, z):
     return field
 
 
-def near_field_propagation(field, lens, z):
+def near_field_propagation(field, lens, z, mag=1):
     """
     Calculate the light field after passing through a lens.
 
@@ -83,6 +83,7 @@ def near_field_propagation(field, lens, z):
 
     if lens.D > field.size:
         size = lens.D if z <= 2 * lens.f else (z - lens.f) / lens.f * lens.D
+        size *= mag
         N = field.N * math.ceil(size / field.size)
         complex_amp = np.zeros([N, N], dtype=complex)
         L = int((N - field.N) / 2)
@@ -94,6 +95,7 @@ def near_field_propagation(field, lens, z):
     elif lens.D <= field.size:
         size = field.size if z <= 2 * lens.f\
                           else (z - lens.f) / lens.f * field.size
+        size *= mag
         N = field.N * math.ceil(size / field.size)
         complex_amp = np.zeros([N, N], dtype=complex)
         lens_N = int((field.N * lens.D / field.size) / 2) * 2

@@ -242,15 +242,15 @@ def delta_wavefront(field, sidel):
     h = 1
     rad = np.pi / 180
 
-    piston = 0
+    piston = W[0][0] * h**2
     tilt = W[1][0] * h * (np.cos(theta - W[1][1] * rad) -
                           rho * np.sin(theta))
-    defocus = 2 * W[2][0] * rho * 0
+    defocus = 2 * W[2][0] * rho
     astigmatism = W[3][0] * h**2 * (2 * rho * np.cos(theta - W[3][1] * rad)**2
                                     - rho**2 * np.sin(theta))
     coma = W[4][0] * h * (3 * rho**2 * np.cos(theta - W[4][1] * rad) -
                           rho**3 * np.sin(2 * theta))
-    spherical = 3 * W[5][0] * rho**3
+    spherical = 4 * W[5][0] * rho**3
 
     delta_W = piston + tilt + defocus + astigmatism + coma + spherical
     delta_W *= k

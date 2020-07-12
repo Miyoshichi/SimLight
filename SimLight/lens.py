@@ -44,7 +44,7 @@ class Lens:
         self._D = D
         self._f = f
         self._coeff = coeff
-        self._zernike, self._sidel = self.__coefficients(self._coeff)
+        self._sidel = self.__coefficients(self._coeff)
         self._lens_number = Lens.counts
         self._lens_type = 'lens'
         self._F = self.__F_number(self._D, self._f)
@@ -58,13 +58,19 @@ class Lens:
     @staticmethod
     def __coefficients(coeff):
         zernike = np.zeros(15)
+        sidel = np.zeros((6, 2))
         if coeff is not []:
-            j = len(coeff)
-            if j > 15:
-                raise ValueError('Unspported geometrical aberration.')
-            zernike[:j] = coeff
-        sidel = zernike_to_sidel(zernike)
-        return zernike, sidel
+            coeff = np.array(coeff)
+            if len(coeff.shape) == 1:
+                j = len(coeff)
+                if j > 15:
+                    raise ValueError('Unspported geometrical aberration.')
+                zernike[:j] = coeff
+                sidel = zernike_to_sidel(zernike)
+            else:
+                j = len(coeff)
+                sidel[:j] = coeff
+        return sidel
 
     @staticmethod
     def __F_number(D, f):
