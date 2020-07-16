@@ -150,6 +150,9 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
     if mask_r:
         if mask_r > 1 or mask_r < 0:
             raise ValueError('Invalid radius of circle mask.')
+    if norm_type:
+        if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
+            raise ValueError('Invalid type of normalization.')
     if dimension:
         if dimension < 1 or dimension > 2 or type(dimension) is not int:
             raise ValueError('Invalid dimension.')
@@ -186,6 +189,69 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
             im = ax.plot(X, intensity_[center])
         ax.set_xlabel('Size [mm]')
         ax.set_ylabel('Intensity [a.u.]')
+
+    if title:
+        ax.set_title(title)
+
+    plt.show()
+
+
+def plot_intensity_diff(field1, field2, label1='Reference', label2='Reality',
+                        norm_type=0, title=''):
+    """
+    Plot the intensity difference of the two light field.
+
+    Args:
+        field1: tuple
+            Reference light field to compare.
+        field2: tuple
+            Another light field to compare.
+        label1: str
+            Label of field1.
+        label2: str
+            Label of field2.
+        norm_type: int
+            Type of normalization. (optional, default is 0)
+            0: no normalization.
+            1: normalize to 0~1.
+            2: normalize to 0~255.
+        title: str
+            Title of the figure. (optional).
+    """
+    # check of input parameters
+    if norm_type:
+        if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
+            raise ValueError('Invalid type of normalization.')
+    if (isinstance(field1, sl.Field) is True and
+            isinstance(field2, sl.Field) is True):
+        if field1.size != field2.size:
+            raise ValueError('Cannot campare the two light fields'
+                             'with different sizes.')
+        else:
+            size = field1.size
+            intensity1 = intensity(field1, norm_type=0)
+            intensity2 = intensity(field2, norm_type=0)
+    else:
+        raise ValueError('Invalid light field.')
+
+    if norm_type > 0:
+        mag = max(np.max(intensity1), np.max(intensity2))
+        intensity1 /= mag
+        intensity2 /= mag
+        if norm_type > 1:
+            intensity1 *= 255
+            intensity2 *= 255
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    center = int(intensity1.shape[0] / 2)
+    X = np.linspace(-size / 2, size / 2, intensity1.shape[0])
+    im1 = ax.plot(X, intensity1[center], label=label1)
+    im2 = ax.plot(X, intensity2[center], label=label2)
+    ax.legend()
+    ax.set_xlabel('Size [mm]')
+    ax.set_ylabel('Intensity [a.u.]')
 
     if title:
         ax.set_title(title)
@@ -252,13 +318,16 @@ def plot_longitude(lens, wavelength=0.550, title=''):
 
     field = sl.PlaneWave(wavelength, size, N)
     sidel = sl.zernike.SidelCoefficients(lens.sidel)
+    # spherical aberration
+    sidel.coefficients[2][0] = 0
     delta_W = sl.delta_wavefront(field, sidel)
     delta_W *= wavelength * 1e-3 / (2 * np.pi)
 
     x = np.linspace(-size / 2, size / 2, N)
     height = x[center:]
     delta_W_line = delta_W[center, center:]
-    longitude = delta_W_line * -(f / (size / 2))**2
+    # longitude = delta_W_line * -(f / (size / 2))**2
+    longitude = delta_W_line * -f**2 / size
 
     fig = plt.figure(figsize=(2, 6))
     ax = fig.add_subplot(111)
@@ -273,7 +342,7 @@ def plot_longitude(lens, wavelength=0.550, title=''):
     ax.spines['left'].set_position(('data', 0))
     ax.spines['right'].set_color('none')
     ax.set_xlim((-max_value, max_value))
-    ax.set_xlabel('Longitude aberration [mm]')
+    ax.set_xlabel('Longitudinal aberration [mm]')
     ax.set_ylabel('Size [mm]', rotation=0, position=(0, 1.01), labelpad=-20)
 
     if title:

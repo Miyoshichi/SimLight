@@ -8,6 +8,8 @@ Created on May 22, 2020
 import math
 import numpy as np
 
+import SimLight as sl
+
 
 def pv(phase, mask=False):
     """
@@ -114,3 +116,25 @@ def zernike_to_sidel(zernike_coefficients):
     sidel_coefficients = s
 
     return sidel_coefficients
+
+
+def longitude_to_wavefront(delta_W, h, wavelength=0.550):
+    """
+    Covert the longitudinal spherical aberration function to sidel
+    coefficients.
+
+    Args:
+    Returns:
+    """
+    delta_W /= wavelength * 1e-3 / (2 * np.pi)
+
+    N = len(delta_W)
+    x = np.linspace(-1, 1, 2 * N)
+    X, Y = np.meshgrid(x, x)
+    rho = np.sqrt(X**2 + Y**2)
+    theta = np.arctan2(Y, X)
+
+    sidel = sl.zernike.SidelCoefficients()
+    sidel.coefficients[5][0] = delta_W / 4 / rho**3
+
+    return sidel

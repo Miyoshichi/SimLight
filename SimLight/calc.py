@@ -227,6 +227,15 @@ def sidel_aberration(field, sidel):
 def delta_wavefront(field, sidel):
     """
     Return the longitude aberration of input light field.
+
+    Args:
+        field: tuple
+            The light field of the lens with aberration.
+        sidel: tuple
+            Sidel coefficients of the lens.
+    Returns:
+        delta_W: array
+            Derivative of the aberrated wavefront.
     """
     field = sl.Field.copy(field)
 
