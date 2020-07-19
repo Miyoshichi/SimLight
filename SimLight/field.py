@@ -77,7 +77,8 @@ class Field:
         field = [self._wavelength, self._size, self._N, self._complex_amp]
         plot_wavefront(field, mask_r, dimension, title)
 
-    def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, title=''):
+    def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, mag=1,
+                       title=''):
         """
         Plot the intensity of light field using matplotlib.
 
@@ -94,15 +95,18 @@ class Field:
                 Dimension of figure. (optional, default is 2, i.e. surface)
                 1: line
                 2: surface
+            mag: float
+                Magnification of the figure. (optional)
             title: str
                 Title of the figure. (optional).
         """
         mask_r = mask_r
         norm_type = norm_type
         dimension = dimension
+        mag = mag
         title = title
         field = [self._size, self._complex_amp]
-        plot_intensity(field, mask_r, norm_type, dimension, title)
+        plot_intensity(field, mask_r, norm_type, dimension, mag, title)
 
     @classmethod
     def copy(cls, field):

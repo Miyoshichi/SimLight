@@ -124,7 +124,8 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
     plt.show()
 
 
-def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
+def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
+                   title=''):
     """
     Plot the intensity of light field using matplotlib.
 
@@ -143,8 +144,10 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
             Dimension of figure. (optional, default is 2, i.e. surface)
             1: line
             2: surface
+        mag: float
+            Magnification of the figure. (optional)
         title: str
-            Title of the figure. (optional).
+            Title of the figure. (optional)
     """
     # check of input parameters
     if mask_r:
@@ -164,6 +167,18 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
         intensity_ = intensity(field[1], norm_type=norm_type)
     else:
         raise ValueError('Invalid light field.')
+    if mag < 1:
+        lower = int(intensity_.shape[0] * (1 - mag) / 2)
+        upper = int(intensity_.shape[0] * (1 - (1 - mag) / 2))
+        intensity_ = intensity_[lower:upper, lower:upper]
+        size *= mag
+    elif mag > 1:
+        lower = int(intensity_.shape[0] * (mag - 1) / 2)
+        upper = int(intensity_.shape[0] * (mag + 1) / 2)
+        new_intensity = np.zeros(lower + upper, lower + upper)
+        new_intensity[lower:upper, lower:upper] = intensity_
+        intensity_ = new_intensity
+        size *= mag
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -178,6 +193,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
             ax.set_xlabel('Size [mm]')
         fig.colorbar(im)
     else:
+        # fig.set_size_inches(6, 2)
         center = int(intensity_.shape[0] / 2)
         if mask_r:
             length = int((intensity_.shape[0] * mask_r) / 2) * 2
@@ -187,6 +203,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
         else:
             X = np.linspace(-size / 2, size / 2, intensity_.shape[0])
             im = ax.plot(X, intensity_[center])
+        ax.grid(True)
         ax.set_xlabel('Size [mm]')
         ax.set_ylabel('Intensity [a.u.]')
 
@@ -196,9 +213,10 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, title=''):
     plt.show()
 
 
-def plot_intensity_diff(field1, field2, label1='Reference', label2='Reality',
-                        norm_type=0, title=''):
-    """
+def plot_two_intensities_diff(field1, field2,
+                              label1='Reference', label2='Reality',
+                              norm_type=0, mag=1, title=''):
+    """Deprecated
     Plot the intensity difference of the two light field.
 
     Args:
@@ -215,6 +233,8 @@ def plot_intensity_diff(field1, field2, label1='Reference', label2='Reality',
             0: no normalization.
             1: normalize to 0~1.
             2: normalize to 0~255.
+        mag: float
+            Magnification of the figure. (optional)
         title: str
             Title of the figure. (optional).
     """
@@ -235,12 +255,29 @@ def plot_intensity_diff(field1, field2, label1='Reference', label2='Reality',
         raise ValueError('Invalid light field.')
 
     if norm_type > 0:
-        mag = max(np.max(intensity1), np.max(intensity2))
-        intensity1 /= mag
-        intensity2 /= mag
+        max_value = max(np.max(intensity1), np.max(intensity2))
+        intensity1 /= max_value
+        intensity2 /= max_value
         if norm_type > 1:
             intensity1 *= 255
             intensity2 *= 255
+
+    if mag < 1:
+        lower = int(intensity1.shape[0] * (1 - mag) / 2)
+        upper = int(intensity1.shape[0] * (1 - (1 - mag) / 2))
+        intensity1 = intensity1[lower:upper, lower:upper]
+        intensity2 = intensity1[lower:upper, lower:upper]
+        size *= mag
+    elif mag > 1:
+        lower = int(intensity1.shape[0] * (mag - 1) / 2)
+        upper = int(intensity1.shape[0] * (mag + 1) / 2)
+        new_intensity1 = np.zeros((lower + upper, lower + upper))
+        new_intensity2 = new_intensity1
+        new_intensity1[lower:upper, lower:upper] = intensity1
+        new_intensity2[lower:upper, lower:upper] = intensity2
+        intensity1 = new_intensity1
+        intensity2 = new_intensity2
+        size *= mag
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -250,9 +287,63 @@ def plot_intensity_diff(field1, field2, label1='Reference', label2='Reality',
     im1 = ax.plot(X, intensity1[center], label=label1)
     im2 = ax.plot(X, intensity2[center], label=label2)
     ax.legend()
+    ax.grid(True)
     ax.set_xlabel('Size [mm]')
     ax.set_ylabel('Intensity [a.u.]')
 
+    if title:
+        ax.set_title(title)
+
+    plt.show()
+
+
+def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
+                                norm_type=0, title=''):
+    """
+    """
+    # check of input parameters
+    if norm_type:
+        if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
+            raise ValueError('Invalid type of normalization.')
+    if isinstance(field_ref, sl.Field) is True:
+        size = field_ref.size
+        intensities = []
+        intensities.append(intensity(field_ref, norm_type=0))
+        for field in fields:
+            if isinstance(field, sl.Field) is True:
+                if field.size != size:
+                    raise ValueError('Cannot campare the two light fields'
+                                     'with different sizes.')
+                else:
+                    # size = field_ref.size
+                    intensities.append(intensity(field, norm_type=0))
+            else:
+                raise ValueError('Invalid light field.')
+    else:
+        raise ValueError('Invalid light field.')
+
+    if norm_type > 0:
+        max_value = np.max(intensities[0])
+        intensities /= max_value
+        if norm_type > 1:
+            intensities *= 255
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    center = int(intensities[0].shape[0] / 2)
+    X = np.linspace(-size / 2, size / 2, intensities[0].shape[0])
+    shift_ = np.zeros(len(fields) + 1, dtype=int)
+    if shift:
+        shift[:len(shift)] = shift
+    for index, intensity_ in enumerate(intensities):
+        ax.plot(X, intensity_[:, center + shift_[index]])
+    ax.grid(True)
+    ax.set_xlabel('Size [mm]')
+    ax.set_ylabel('Intensity [a.u.]')
+
+    if labels:
+        ax.legend(labels)
     if title:
         ax.set_title(title)
 
