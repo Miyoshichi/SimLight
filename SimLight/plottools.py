@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
+import scipy.interpolate
 
 import SimLight as sl
 from .utils import pv, rms, circle_aperature
@@ -216,8 +217,9 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 def plot_two_intensities_diff(field1, field2,
                               label1='Reference', label2='Reality',
                               norm_type=0, mag=1, title=''):
-    """Deprecated
-    Plot the intensity difference of the two light field.
+    """
+    Plot the intensity difference of the two light fields.
+    (Deprecated)
 
     Args:
         field1: tuple
@@ -236,7 +238,7 @@ def plot_two_intensities_diff(field1, field2,
         mag: float
             Magnification of the figure. (optional)
         title: str
-            Title of the figure. (optional).
+            Title of the figure. (optional)
     """
     # check of input parameters
     if norm_type:
@@ -298,8 +300,26 @@ def plot_two_intensities_diff(field1, field2,
 
 
 def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
-                                norm_type=0, title=''):
+                                norm_type=0, figsize=(8, 5), title=''):
     """
+    Plot the intensity difference of the light fields.
+
+    Args:
+        field1: tuple
+            Reference light field to compare.
+        field2: tuple
+            Another light field to compare.
+        label1: str
+            Label of field1.
+        label2: str
+            Label of field2.
+        norm_type: int
+            Type of normalization. (optional, default is 0)
+            0: no normalization.
+            1: normalize to 0~1.
+            2: normalize to 0~255.
+        title: str
+            Title of the figure. (optional)
     """
     # check of input parameters
     if norm_type:
@@ -328,7 +348,7 @@ def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
         if norm_type > 1:
             intensities *= 255
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
 
     center = int(intensities[0].shape[0] / 2)
@@ -438,5 +458,88 @@ def plot_longitude(lens, wavelength=0.550, title=''):
 
     if title:
         ax.set_title(title)
+
+    plt.show()
+
+
+def plot_dm_wavefront(field, K, mask_r=None, title=''):
+    """
+    """
+    unwrap = True
+
+    # check of input parameters
+    if mask_r:
+        if mask_r > 1 or mask_r < 0:
+            raise ValueError('Invalid radius of circle mask.')
+    if isinstance(field, sl.Field) is True:
+        wavelength = field.wavelength
+        size = field.size
+        N = field.N
+        phase_ = phase(field, unwrap=unwrap)
+    elif isinstance(field, list) is True:
+        wavelength = field[0]
+        size = field[1]
+        N = field[2]
+        phase_ = phase(field[3], unwrap=unwrap)
+    else:
+        raise ValueError('Invalid light field.')
+
+    phase_ = wavelength * phase_ / (2 * np.pi)
+    x_dm = np.linspace((-K + 1) / 2, (K - 1) / 2, K)
+    X_dm, Y_dm = np.meshgrid(x_dm, x_dm)
+    r_dm = np.sqrt(X_dm**2 + Y_dm**2)
+    x = np.linspace(-size / 2, size / 2, N)
+    X, Y = np.meshgrid(x, x)
+
+    # K = dm.K
+    dm_points = np.zeros((K, K))
+    dm_points_X = np.zeros((K, K))
+    dm_points_Y = np.zeros((K, K))
+    for i in range(K):
+        for j in range(K):
+            ii = int(N / 8 * i + N / 16)
+            jj = int(N / 8 * j + N / 16)
+            dm_points[i][j] = phase_[ii][jj]
+            dm_points_X[i][j] = X[ii][jj]
+            dm_points_Y[i][j] = Y[ii][jj]
+            if i == 0 or i == K - 1 or j == 0 or j == K - 1:
+                dm_points[i][j] == 0
+
+    dm_wavefront = scipy.interpolate.interp2d(dm_points_X, dm_points_Y,
+                                              dm_points, kind='cubic')
+    dm_wavefront = dm_wavefront(x, x)
+
+    fig = plt.figure(figsize=(10, 4))
+    grid = plt.GridSpec(6, 11, wspace=0.5, hspace=0.5)
+    ax1 = fig.add_subplot(grid[0:6, 0:5])
+    ax2 = fig.add_subplot(grid[0:6, 5:11])
+
+    if mask_r:
+        _, _, norm_radius = circle_aperature(phase_, mask_r)
+        max_value = np.max(phase_[norm_radius <= mask_r])
+        min_value = np.min(phase_[norm_radius <= mask_r])
+        dm_points[r_dm > mask_r * np.sqrt(2) * (3 / 4) * (K / 2)] = np.nan
+        PV = 'P-V: ' + str(round(pv(dm_wavefront, mask=True), 3)) + ' λ'
+        RMS = 'RMS: ' + str(round(rms(dm_wavefront, mask=True), 3)) + ' λ'
+    else:
+        max_value = np.max(phase_)
+        min_value = np.min(phase_)
+        PV = 'P-V: ' + str(round(pv(dm_wavefront), 3)) + ' λ'
+        RMS = 'RMS: ' + str(round(rms(dm_wavefront), 3)) + ' λ'
+
+    extent = [-size / 2, size / 2, -size / 2, size / 2]
+    im1 = ax1.imshow(dm_points, cmap='rainbow', vmin=min_value, vmax=max_value)
+    fig.colorbar(im1)
+    im2 = ax2.imshow(dm_wavefront, extent=extent, cmap='rainbow',
+                     vmin=min_value, vmax=max_value)
+    ax2.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
+             transform=ax2.transAxes)
+    ax2.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
+             transform=ax2.transAxes)
+    if mask_r:
+        mask = patches.Circle([0, 0], size * mask_r / 2,
+                              fc='none', ec='none',)
+        ax2.add_patch(mask)
+        im2.set_clip_path(mask)
 
     plt.show()

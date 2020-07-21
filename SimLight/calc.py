@@ -7,6 +7,7 @@ Created on May 22, 2020
 
 import math
 import numpy as np
+import scipy.interpolate
 
 import SimLight as sl
 from .unwrap import simple_unwrap
@@ -265,3 +266,40 @@ def delta_wavefront(field, sidel):
     delta_W *= k
 
     return delta_W
+
+
+def deformable_mirror(field, K):
+    """
+    """
+    field = sl.Field.copy(field)
+
+    phase_ = phase(field, unwrap=True)
+
+    wavelength = field.wavelength
+    size = field.size
+    N = field.N
+    dm_field = sl.PlaneWave(wavelength, size, N)
+
+    x_dm = np.linspace((-K + 1) / 2, (K - 1) / 2, K)
+    X_dm, Y_dm = np.meshgrid(x_dm, x_dm)
+    x = np.linspace(-size / 2, size / 2, N)
+    X, Y = np.meshgrid(x, x)
+
+    dm_points = np.zeros((K, K))
+    dm_points_X = np.zeros((K, K))
+    dm_points_Y = np.zeros((K, K))
+    for i in range(K):
+        for j in range(K):
+            ii = int(N / 8 * i + N / 16)
+            jj = int(N / 8 * j + N / 16)
+            dm_points[i][j] = phase_[ii][jj]
+            dm_points_X[i][j] = X[ii][jj]
+            dm_points_Y[i][j] = Y[ii][jj]
+    dm_phase = scipy.interpolate.interp2d(dm_points_X, dm_points_Y,
+                                          dm_points, kind='cubic')
+    dm_phase = dm_phase(x, x)
+
+    res_phase = phase_ - dm_phase
+    dm_field.complex_amp *= np.exp(-1j * res_phase)
+
+    return dm_field

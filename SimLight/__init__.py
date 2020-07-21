@@ -16,7 +16,7 @@ from .field import Field, PlaneWave, SphericalWave, Gaussian
 from .lens import Lens, CylindricalLens
 from .propagation import propagation, near_field_propagation
 from .calc import (phase, intensity, aberration, sidel_aberration,
-                   delta_wavefront)
+                   delta_wavefront, deformable_mirror)
 from .aperture import circle_aperture
 from .utils import longitude_to_wavefront
 from . import plottools, zernike
