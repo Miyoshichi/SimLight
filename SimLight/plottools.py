@@ -7,6 +7,7 @@ Created on May 22, 2020
 
 import math
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
@@ -300,7 +301,8 @@ def plot_two_intensities_diff(field1, field2,
 
 
 def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
-                                norm_type=0, figsize=(8, 5), title=''):
+                                norm_type=0, figsize=(6.4, 4.8), mag=1,
+                                title=''):
     """
     Plot the intensity difference of the light fields.
 
@@ -348,6 +350,24 @@ def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
         if norm_type > 1:
             intensities *= 255
 
+    if mag < 1:
+        lower = int(intensities[0].shape[0] * (1 - mag) / 2)
+        upper = int(intensities[0].shape[0] * (1 - (1 - mag) / 2))
+        new_intensities = np.zeros((intensities.shape[0],
+                                    upper - lower,
+                                    upper - lower))
+        new_intensities[:] = intensities[:, lower:upper, lower:upper]
+        intensities = new_intensities
+    elif mag > 1:
+        lower = int(intensities[0].shape[0] * (mag - 1) / 2)
+        upper = int(intensities[0].shape[0] * (mag + 1) / 2)
+        new_intensities = np.zeros((intensities.shape[0],
+                                    lower + upper,
+                                    lower + upper))
+        new_intensities[:, lower:upper, lower:upper] = intensities[:]
+        intensities = new_intensities
+    size *= mag
+
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
 
@@ -355,9 +375,9 @@ def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
     X = np.linspace(-size / 2, size / 2, intensities[0].shape[0])
     shift_ = np.zeros(len(fields) + 1, dtype=int)
     if shift:
-        shift[:len(shift)] = shift
+        shift_[:len(shift)] = shift
     for index, intensity_ in enumerate(intensities):
-        ax.plot(X, intensity_[:, center + shift_[index]])
+        ax.plot(X, intensity_[center + shift_[index]])
     ax.grid(True)
     ax.set_xlabel('Size [mm]')
     ax.set_ylabel('Intensity [a.u.]')
@@ -509,29 +529,64 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
                                               dm_points, kind='cubic')
     dm_wavefront = dm_wavefront(x, x)
 
-    fig = plt.figure(figsize=(10, 4))
-    grid = plt.GridSpec(6, 11, wspace=0.5, hspace=0.5)
-    ax1 = fig.add_subplot(grid[0:6, 0:5])
-    ax2 = fig.add_subplot(grid[0:6, 5:11])
+    dm_points *= -wavelength
+    dm_wavefront *= -1
+
+    # fig = plt.figure(figsize=(10, 4))
+    # grid = plt.GridSpec(6, 11, wspace=0.5, hspace=0.5)
+    # ax1 = fig.add_subplot(grid[0:6, 0:5])
+    # ax2 = fig.add_subplot(grid[0:6, 5:11])
+    fig1 = plt.figure()
+    fig2 = plt.figure()
+    ax1 = fig1.add_subplot(111)
+    ax2 = fig2.add_subplot(111)
 
     if mask_r:
-        _, _, norm_radius = circle_aperature(phase_, mask_r)
-        max_value = np.max(phase_[norm_radius <= mask_r])
-        min_value = np.min(phase_[norm_radius <= mask_r])
         dm_points[r_dm > mask_r * np.sqrt(2) * (3 / 4) * (K / 2)] = np.nan
+        max_value1 = np.nanmax(dm_points)
+        min_value1 = np.nanmin(dm_points)
+        _, _, norm_radius = circle_aperature(dm_wavefront, mask_r)
+        max_value2 = np.max(dm_wavefront[norm_radius <= mask_r])
+        min_value2 = np.min(dm_wavefront[norm_radius <= mask_r])
         PV = 'P-V: ' + str(round(pv(dm_wavefront, mask=True), 3)) + ' λ'
         RMS = 'RMS: ' + str(round(rms(dm_wavefront, mask=True), 3)) + ' λ'
     else:
-        max_value = np.max(phase_)
-        min_value = np.min(phase_)
+        max_value1 = np.nanmax(dm_points)
+        min_value1 = np.nanmin(dm_points)
+        max_value2 = np.max(dm_wavefront)
+        min_value2 = np.min(dm_wavefront)
         PV = 'P-V: ' + str(round(pv(dm_wavefront), 3)) + ' λ'
         RMS = 'RMS: ' + str(round(rms(dm_wavefront), 3)) + ' λ'
 
     extent = [-size / 2, size / 2, -size / 2, size / 2]
-    im1 = ax1.imshow(dm_points, cmap='rainbow', vmin=min_value, vmax=max_value)
-    fig.colorbar(im1)
+    im1 = ax1.imshow(dm_points, cmap='rainbow',
+                     vmin=min_value1, vmax=max_value1)
+    fig1.colorbar(im1)
+    ax1.set_xticks(np.arange(dm_points.shape[1]))
+    ax1.set_yticks(np.arange(dm_points.shape[0]))
+    ax1.set_xticklabels(np.arange(1, K + 1))
+    ax1.set_yticklabels(np.arange(1, K + 1))
+    # for edge, spine in ax1.spines.items():
+    #     spine.set_visible(False)
+    ax1.set_xticks(np.arange(dm_points.shape[1] + 1) - 0.5, minor=True)
+    ax1.set_yticks(np.arange(dm_points.shape[0] + 1) - 0.5, minor=True)
+    ax1.grid(which='minor', color='w', linestyle='-', linewidth=3)
+    ax1.tick_params(which='both', bottom=False, left=False)
+    textcolors = ('white', 'black')
+    valfmt = matplotlib.ticker.StrMethodFormatter('{x:.1f}')
+    threshold = im1.norm(np.nanmax(dm_points)) / 2
+    kw = dict(horizontalalignment='center', verticalalignment='center')
+    kw.update()
+    texts = []
+    for i in range(dm_points.shape[0]):
+        for j in range(dm_points.shape[1]):
+            kw.update(color=textcolors[int(im1.norm(dm_points[i, j]) >
+                                           threshold)])
+            text = im1.axes.text(j, i, valfmt(dm_points[i, j], None), **kw)
+            texts.append(text)
     im2 = ax2.imshow(dm_wavefront, extent=extent, cmap='rainbow',
-                     vmin=min_value, vmax=max_value)
+                     vmin=min_value2, vmax=max_value2)
+    fig2.colorbar(im2)
     ax2.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
              transform=ax2.transAxes)
     ax2.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
