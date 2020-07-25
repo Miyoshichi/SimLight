@@ -237,7 +237,7 @@ def plot_two_intensities_diff(field1, field2,
             1: normalize to 0~1.
             2: normalize to 0~255.
         mag: float
-            Magnification of the figure. (optional)
+            Magnification of the figure. (optional, default is 1)
         title: str
             Title of the figure. (optional)
     """
@@ -304,22 +304,27 @@ def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
                                 norm_type=0, figsize=(6.4, 4.8), mag=1,
                                 title=''):
     """
-    Plot the intensity difference of the light fields.
+    Plot the intensity difference of the light fields in one line.
 
     Args:
         field1: tuple
             Reference light field to compare.
-        field2: tuple
-            Another light field to compare.
-        label1: str
-            Label of field1.
-        label2: str
-            Label of field2.
+        fields: tuple
+            Another light fields to compare.
+        shift: list
+            Shift pixels of the line in intensity. (optional, default is None)
+        labels: list
+            Labels of all light fields. (optional, default is None)
         norm_type: int
             Type of normalization. (optional, default is 0)
             0: no normalization.
             1: normalize to 0~1.
             2: normalize to 0~255.
+        figsize: list
+            Physical size of the figure in inch. (optional, default is
+            (6.4, 4.8))
+        mag: float
+            Magnificaiton of the figure. (optional, default is 1)
         title: str
             Title of the figure. (optional)
     """
@@ -349,11 +354,13 @@ def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
         intensities /= max_value
         if norm_type > 1:
             intensities *= 255
+    else:
+        intensities /= 1
 
     if mag < 1:
         lower = int(intensities[0].shape[0] * (1 - mag) / 2)
         upper = int(intensities[0].shape[0] * (1 - (1 - mag) / 2))
-        new_intensities = np.zeros((intensities.shape[0],
+        new_intensities = np.zeros((len(intensities),
                                     upper - lower,
                                     upper - lower))
         new_intensities[:] = intensities[:, lower:upper, lower:upper]
@@ -361,7 +368,7 @@ def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
     elif mag > 1:
         lower = int(intensities[0].shape[0] * (mag - 1) / 2)
         upper = int(intensities[0].shape[0] * (mag + 1) / 2)
-        new_intensities = np.zeros((intensities.shape[0],
+        new_intensities = np.zeros((len(intensities),
                                     lower + upper,
                                     lower + upper))
         new_intensities[:, lower:upper, lower:upper] = intensities[:]
@@ -436,10 +443,19 @@ def plot_psf(field, aperture_type='circle', dimension=2, title=''):
     plt.show()
 
 
-def plot_longitude(lens, wavelength=0.550, title=''):
+def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
     """
-    Show the graph of the longitudinal aberration acrroding to the
+    Plot the graph of the longitudinal aberration acrroding to the
     Sidel coefficients.
+
+    Args:
+        lens: tuple
+            The lens has the aberration.
+        wavelength: float
+            The wavelength of the light for calculating the longitudinal
+            aberration. (optional, default is 0.550µm)
+        title: str
+            The titles of the figure. (optional)
     """
     # default parameters
     size = lens.D
@@ -453,12 +469,13 @@ def plot_longitude(lens, wavelength=0.550, title=''):
     sidel.coefficients[2][0] = 0
     delta_W = sl.delta_wavefront(field, sidel)
     delta_W *= wavelength * 1e-3 / (2 * np.pi)
+    # delta_W *= wavelength * 1e-3
 
     x = np.linspace(-size / 2, size / 2, N)
     height = x[center:]
     delta_W_line = delta_W[center, center:]
-    # longitude = delta_W_line * -(f / (size / 2))**2
-    longitude = delta_W_line * -f**2 / size
+    longitude = delta_W_line * -(f / size)**2 * 16
+    # longitude = delta_W_line * -f**2 / size
 
     fig = plt.figure(figsize=(2, 6))
     ax = fig.add_subplot(111)
@@ -484,6 +501,19 @@ def plot_longitude(lens, wavelength=0.550, title=''):
 
 def plot_dm_wavefront(field, K, mask_r=None, title=''):
     """
+    Plot the stroke of each actuators and the generated compensation
+    wavefront.
+
+    Args:
+        field: tuple
+            The input light field to be compensated.
+        K: int
+            The maximum number of actuators in one direction.
+        mask_r: float
+            Radius of a circle mask. (optional, between 0 and 1,
+            default is None).
+        title: str
+            The title of the two figures. (optional)
     """
     unwrap = True
 
@@ -596,5 +626,9 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
                               fc='none', ec='none',)
         ax2.add_patch(mask)
         im2.set_clip_path(mask)
+
+    if title:
+        ax1.set_title(title[0])
+        ax2.set_title(title[1])
 
     plt.show()
