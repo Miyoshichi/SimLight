@@ -11,6 +11,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
+from numpy.lib.function_base import average
 import scipy.interpolate
 
 import SimLight as sl
@@ -20,21 +21,22 @@ from .unwrap import simple_unwrap_1d
 
 
 def plot_wavefront(field, mask_r=None, dimension=2, title=''):
-    """
+    """Plot the wavefront.
+
     Plot the wavefront of light field using matplotlib.
 
-    Args:
-        field:
+    Parameters
+    ----------
+        field : Field
             A light field.
-        mask_r: float
-            Radius of a circle mask. (optional, between 0 and 1,
-            default is None).
-        dimension: int
-            Dimension of figure. (optional, default is 2, i.e. surface)
-            2: surface
-            3: 3d
-        title: str
-            Title of the figure. (optional).
+        mask_r : float, optional, from 0 to 1, default None
+            Radius of a circle mask.
+        dimension : int, optional, {2, 3}, default 2
+            Dimension of the showing wavefront, where
+                2 for surface,
+                3 for 3d.
+        title : str, optional
+            Title of the figure.
     """
     unwrap = True
 
@@ -95,8 +97,9 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         X, Y = np.meshgrid(length, length)
         if mask_r:
             radius = np.sqrt(X**2 + Y**2)
-            X[radius > size * mask_r / 2] = np.nan
-            Y[radius > size * mask_r / 2] = np.nan
+            # X[radius > size * mask_r / 2] = np.nan
+            # Y[radius > size * mask_r / 2] = np.nan
+            phase_[radius > size * mask_r / 2] = np.nan
         stride = math.ceil(N / 25)
         im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
                              cmap='rainbow', vmin=min_value, vmax=max_value)
@@ -128,28 +131,29 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
 
 def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
                    title=''):
-    """
+    """Plot the intensity.
+
     Plot the intensity of light field using matplotlib.
 
-    Args:
-        field:
+    Parameters
+    ----------
+        field : Field
             A light field.
-        mask_r: float
-            Radius of a circle mask. (optional, between 0 and 1,
-            default is None).
-        norm_type: int
-            Type of normalization. (optional, default is 0)
-            0: no normalization.
-            1: normalize to 0~1.
-            2: normalize to 0~255.
-        dimension: int
-            Dimension of figure. (optional, default is 2, i.e. surface)
-            1: line
-            2: surface
-        mag: float
-            Magnification of the figure. (optional)
-        title: str
-            Title of the figure. (optional)
+        mask_r : float, optional, from 0 to 1, default None
+            Radius of a circle mask.
+        norm_type : int, optional, {0, 1, 2}, default 0
+            Type of normalization, where
+                0 for no normalization,
+                1 for normalize up to 1,
+                2 for normalize up to 255.
+        dimension : int, optional, {1, 2}, default 2
+            Dimension of the showing intensity, where
+                1 for showing the intensity in a line,
+                2 for showing the intensity in a surface.
+        mag : float, optional, default 1
+            Magnification of the figure.
+        title : str, optional, default ''
+            Title of the figure.
     """
     # check of input parameters
     if mask_r:
@@ -218,28 +222,33 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 def plot_two_intensities_diff(field1, field2,
                               label1='Reference', label2='Reality',
                               norm_type=0, mag=1, title=''):
-    """
-    Plot the intensity difference of the two light fields.
-    (Deprecated)
+    """Plot the intensity difference of the two light fields.
 
-    Args:
-        field1: tuple
+    Plot the intensity difference of the two light fields.
+    .. deprecated:: 0.0.3
+        `plot_two_intensities_diff` will be removed by
+        `plot_multi_intensities_diff` because it can compare multiple
+        light fields at a time.
+
+    Parameters
+    ----------
+        field1 : tuple
             Reference light field to compare.
-        field2: tuple
+        field2 : tuple
             Another light field to compare.
-        label1: str
+        label1 : str
             Label of field1.
-        label2: str
+        label2 : str
             Label of field2.
-        norm_type: int
-            Type of normalization. (optional, default is 0)
-            0: no normalization.
-            1: normalize to 0~1.
-            2: normalize to 0~255.
-        mag: float
-            Magnification of the figure. (optional, default is 1)
-        title: str
-            Title of the figure. (optional)
+        norm_type : int, optional, {0, 1, 2}, default 0
+            Type of normalization, where
+                0 for no normalization,
+                1 for normalize up to 1,
+                2 for normalize up to 255.
+        mag: float, optional, default 1
+            Magnification of the figure.
+        title : str, optional, default ''
+            Title of the figure.
     """
     # check of input parameters
     if norm_type:
@@ -303,30 +312,35 @@ def plot_two_intensities_diff(field1, field2,
 def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
                                 norm_type=0, figsize=(6.4, 4.8), mag=1,
                                 title=''):
-    """
+    """Plot the intensity difference of the light fields in one line.
+
     Plot the intensity difference of the light fields in one line.
 
-    Args:
-        field1: tuple
+    Parameters
+    ----------
+        field_ref : Field
             Reference light field to compare.
-        fields: tuple
+        fields : array-like, Field
             Another light fields to compare.
-        shift: list
-            Shift pixels of the line in intensity. (optional, default is None)
-        labels: list
-            Labels of all light fields. (optional, default is None)
-        norm_type: int
-            Type of normalization. (optional, default is 0)
-            0: no normalization.
-            1: normalize to 0~1.
-            2: normalize to 0~255.
-        figsize: list
-            Physical size of the figure in inch. (optional, default is
-            (6.4, 4.8))
-        mag: float
-            Magnificaiton of the figure. (optional, default is 1)
-        title: str
-            Title of the figure. (optional)
+        shift : array-like or list, optional, default None
+            Shift pixels of the line in intensity.
+        labels : list, optional, default None
+            Labels of all light fields.
+        norm_type : int, optional, {0, 1, 2}, default 0
+            Type of normalization, where
+                0 for no normalization,
+                1 for normalize up to 1,
+                2 for normalize up to 255.
+        figsize : list, optional, default (6.4, 4.8)
+            Physical size of the figure in inch.
+        mag : float, optional, default 1
+            Magnification of the figure.
+        title : list, optional, default ''
+            Title of the figure.
+
+    Examples
+    ----------
+    >>> slpl.plot_multi_intensities_diff()
     """
     # check of input parameters
     if norm_type:
@@ -398,22 +412,24 @@ def plot_multi_intensities_diff(field_ref, *fields, shift=None, labels=None,
 
 
 def plot_psf(field, aperture_type='circle', dimension=2, title=''):
-    """
+    """Show the figure of point spread function (PSF).
+
     Show the figure of point spread function of a light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : Field
             The light fiedl.
-        aperture_type: str
-            The shape of the aperture. (optional, default is 'circle')
-                circle: circle aperture
-                square: square aperture
-        dimension: int
-            Dimension of figure. (optional, default is 2, i.e. surface)
-            1: line
-            2: surface
-        title: str
-            Title of the figure. (optional).
+        aperture_type : str, optional, {'circle', 'square'}, default 'circle'
+            The shape of the aperture.
+                'circle' for circle aperture,
+                'square' for square aperture.
+        dimension : int, optional, {1, 2}, default 2
+            Dimension of figure, where
+                1 for line,
+                2 for surface.
+        title : str, optional, default ''
+            Title of the figure.
     """
     aperture = ['circle', 'square']
     # check of input parameters
@@ -444,18 +460,20 @@ def plot_psf(field, aperture_type='circle', dimension=2, title=''):
 
 
 def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
-    """
+    """Plot longitudinal aberration.
+
     Plot the graph of the longitudinal aberration acrroding to the
     Sidel coefficients.
 
-    Args:
-        lens: tuple
+    Parameters
+    ----------
+        lens : Lens
             The lens has the aberration.
-        wavelength: float
+        wavelength : float, optional, default 0.550
             The wavelength of the light for calculating the longitudinal
-            aberration. (optional, default is 0.550µm)
-        title: str
-            The titles of the figure. (optional)
+            aberration.
+        title : str, optional, default ''
+            The titles of the figure.
     """
     # default parameters
     size = lens.D
@@ -500,20 +518,21 @@ def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
 
 
 def plot_dm_wavefront(field, K, mask_r=None, title=''):
-    """
+    """Plot deformable mirror concerned graphs.
+
     Plot the stroke of each actuators and the generated compensation
     wavefront.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : Field
             The input light field to be compensated.
-        K: int
+        K : int
             The maximum number of actuators in one direction.
-        mask_r: float
-            Radius of a circle mask. (optional, between 0 and 1,
-            default is None).
-        title: str
-            The title of the two figures. (optional)
+        mask_r : float, optional, from 0 to 1, default None.
+            Radius of a circle mask.
+        title : str, optional, default ''
+            The title of the two figures.
     """
     unwrap = True
 
@@ -554,13 +573,15 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
             dm_points_Y[i][j] = Y[ii][jj]
             if i == 0 or i == K - 1 or j == 0 or j == K - 1:
                 dm_points[i][j] == 0
+    average = np.average(dm_points)
+    dm_points -= average
 
     dm_wavefront = scipy.interpolate.interp2d(dm_points_X, dm_points_Y,
                                               dm_points, kind='cubic')
     dm_wavefront = dm_wavefront(x, x)
 
     dm_points *= -wavelength
-    dm_wavefront *= -1
+    dm_wavefront *= -wavelength
 
     # fig = plt.figure(figsize=(10, 4))
     # grid = plt.GridSpec(6, 11, wspace=0.5, hspace=0.5)
@@ -578,8 +599,8 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
         _, _, norm_radius = circle_aperature(dm_wavefront, mask_r)
         max_value2 = np.max(dm_wavefront[norm_radius <= mask_r])
         min_value2 = np.min(dm_wavefront[norm_radius <= mask_r])
-        PV = 'P-V: ' + str(round(pv(dm_wavefront, mask=True), 3)) + ' λ'
-        RMS = 'RMS: ' + str(round(rms(dm_wavefront, mask=True), 3)) + ' λ'
+        PV = 'P-V: ' + str(round(pv(dm_wavefront, mask=True), 3)) + ' µm'
+        RMS = 'RMS: ' + str(round(rms(dm_wavefront, mask=True), 3)) + ' µm'
     else:
         max_value1 = np.nanmax(dm_points)
         min_value1 = np.nanmin(dm_points)

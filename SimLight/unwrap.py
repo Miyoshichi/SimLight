@@ -9,16 +9,20 @@ import numpy as np
 
 
 def simple_unwrap(phase):
-    """
+    """A simple method to unwrap the input 2D phase.
+
     A simple method to unwrap the input 2D phase using numpy.unwrap().
     This method is just suitable for the phase without any noise,
     like which is calculated by numpy.angel(), etc.
 
-    Args:
-        phase:
+    Parameters
+    ----------
+        phase : array-like
             Wrapped phase.
-    Returns:
-        unwrap_phase:
+
+    Returns
+    -------
+        unwrap_phase : array-like
             Unwrapped phase.
     """
     unwrapped_phase = np.unwrap(np.unwrap(phase), axis=0)

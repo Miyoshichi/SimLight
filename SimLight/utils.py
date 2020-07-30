@@ -15,14 +15,20 @@ from .calc import phase
 
 
 def pv(phase, mask=False):
-    """
-    Calculate the PV(peek to valley) value of a wavefront.
+    """Calculate the PV.
 
-    Args:
-        phase:
+    Calculate the PV (peek-to-valley) value of a wavefront.
+
+    Parameters
+    ----------
+        phase : array-like
             Wavefront to be calculated.
-    Returns:
-        pv:
+        mask : bool, optional, default False
+            Whether add a circle mask to calculation range.
+
+    Returns
+    ----------
+        pv : float
             The PV value of input wavefront.
     """
     if mask is True:
@@ -36,14 +42,20 @@ def pv(phase, mask=False):
 
 
 def rms(phase, mask=False):
-    """
-    Calculate the RMS(root mean square) value of a wavefront.
+    """Calculate the RMS.
 
-    Args:
-        phase:
+    Calculate the RMS (root mean square) value of a wavefront.
+
+    Parameters
+    ----------
+        phase : array-like
             Wavefront to be calculated.
-    Returns:
-        pv:
+        mask : bool, optional, default False
+            Whether add a circle mask to calculation range.
+
+    Returns
+    ----------
+        rms : float
             The RMS value of input wavefront.
     """
     size = phase.size
@@ -60,18 +72,22 @@ def rms(phase, mask=False):
 
 
 def circle_aperature(field, mask_r):
-    """
+    """Filter the circle aperature of a light field.
+
     Filter the circle aperature of a light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : Field
             Input square field.
-        mask_r: float
-            Radius of a circle mask (between 0 and 1).
-    Returns:
-        X:
+        mask_r : float, from 0 to 1
+            Radius of a circle mask.
+
+    Returns
+    ----------
+        X : array-like
             Filtered meshgird X.
-        Y:
+        Y : array-like
             Filtered meshgrid Y.
     """
     length = field.shape[0]
@@ -85,14 +101,20 @@ def circle_aperature(field, mask_r):
 
 
 def zernike_to_sidel(zernike_coefficients):
-    """
+    """Covert Zernike polynomials coefficients to Sidel polynomials
+    coefficients.
+
     Covert Zernike polynomials coefficients to Sidel polynomials
     coefficients.
 
-    Args:
-        zernike_coefficients: list
-    Returns:
-        sidel_coefficients: list
+    Parameters
+    ----------
+        zernike_coefficients : list or array-like
+            Zernike coefficients.
+    Returns
+    ----------
+        sidel_coefficients : list or array-like
+            Sidel coefficients.
     """
     z = zernike_coefficients
     s = np.zeros((6, 2))
@@ -121,22 +143,28 @@ def zernike_to_sidel(zernike_coefficients):
     return sidel_coefficients
 
 
-def longitude_to_wavefront(lens, longitude, wavelength=0.550):
-    """
-    Covert the longitudinal spherical aberration function to sidel
-    coefficients.
+def longitudinal_to_wavefront(lens, longitude, wavelength=0.550):
+    """Covert the longitudinal spherical aberration function to light field.
 
-    Args:
-        lens: tuple
+    Using the longitudinal spherical aberration function to generate
+    the light field.
+
+    Parameters
+    ----------
+        lens : Lens
             The lens with spherical aberration.
-        longitude: list
+        longitude : list or array-like
             The longitudinal spherical aberration funciton of the lens.
-        wavelength: float
+        wavelength : float, optional, default 0.550
             The wavelenth of used light.
-    Returns:
-        field: tuple
+
+    Returns
+    ----------
+        field : Field
             The light field after passing through the lens.
-    Yeild:
+
+    Yeilds
+    ----------
         Two figures of longitudinal aberration and wavefront.
     """
     D = lens.D
