@@ -568,7 +568,7 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
         for j in range(K):
             ii = int(N / 8 * i + N / 16)
             jj = int(N / 8 * j + N / 16)
-            dm_points[i][j] = phase_[ii][jj]
+            dm_points[i][j] = phase_[ii][jj] / 2
             dm_points_X[i][j] = X[ii][jj]
             dm_points_Y[i][j] = Y[ii][jj]
             if i == 0 or i == K - 1 or j == 0 or j == K - 1:
@@ -580,8 +580,8 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
                                               dm_points, kind='cubic')
     dm_wavefront = dm_wavefront(x, x)
 
-    dm_points *= -wavelength
-    dm_wavefront *= -wavelength
+    dm_points *= wavelength
+    dm_wavefront *= wavelength
 
     # fig = plt.figure(figsize=(10, 4))
     # grid = plt.GridSpec(6, 11, wspace=0.5, hspace=0.5)
@@ -624,7 +624,7 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
     ax1.grid(which='minor', color='w', linestyle='-', linewidth=3)
     ax1.tick_params(which='both', bottom=False, left=False)
     textcolors = ('white', 'black')
-    valfmt = matplotlib.ticker.StrMethodFormatter('{x:.1f}')
+    valfmt = matplotlib.ticker.StrMethodFormatter('{x:.2f}')
     threshold = im1.norm(np.nanmax(dm_points)) / 2
     kw = dict(horizontalalignment='center', verticalalignment='center')
     kw.update()

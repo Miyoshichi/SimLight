@@ -292,12 +292,12 @@ def deformable_mirror(field, K):
         for j in range(K):
             ii = int(N / 8 * i + N / 16)
             jj = int(N / 8 * j + N / 16)
-            dm_points[i][j] = phase_[ii][jj]
+            dm_points[i][j] = phase_[ii][jj] / 2
             dm_points_X[i][j] = X[ii][jj]
             dm_points_Y[i][j] = Y[ii][jj]
     dm_phase = scipy.interpolate.interp2d(dm_points_X, dm_points_Y,
                                           dm_points, kind='cubic')
-    dm_phase = dm_phase(x, x)
+    dm_phase = dm_phase(x, x) * 2
 
     res_phase = phase_ - dm_phase
     dm_field.complex_amp *= np.exp(-1j * res_phase)
