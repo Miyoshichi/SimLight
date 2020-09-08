@@ -10,6 +10,7 @@ import copy
 import numpy as np
 
 from .plottools import plot_wavefront, plot_intensity
+from .units import *
 
 
 class Field:
@@ -51,6 +52,7 @@ class Field:
         self._wavelength = wavelength
         self._size = size
         self._N = N
+        self._curvature = 0
         self._complex_amp = np.ones([N, N], dtype=np.complex)
 
     def zernike_aberration(self):
@@ -78,7 +80,7 @@ class Field:
         plot_wavefront(field, mask_r, dimension, title)
 
     def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, mag=1,
-                       title=''):
+                       unit='µm', title=''):
         """
         Plot the intensity of light field using matplotlib.
 
@@ -104,9 +106,10 @@ class Field:
         norm_type = norm_type
         dimension = dimension
         mag = mag
+        unit = unit
         title = title
         field = [self._size, self._complex_amp]
-        plot_intensity(field, mask_r, norm_type, dimension, mag, title)
+        plot_intensity(field, mask_r, norm_type, dimension, mag, unit, title)
 
     @classmethod
     def copy(cls, field):
@@ -142,6 +145,14 @@ class Field:
     @N.setter
     def N(self, N):
         self._N = N
+
+    @property
+    def curvature(self):
+        return self._curvature
+
+    @curvature.setter
+    def curvature(self, curvature):
+        self._curvature = curvature
 
     @property
     def complex_amp(self):

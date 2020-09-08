@@ -18,6 +18,7 @@ import SimLight as sl
 from .utils import pv, rms, circle_aperature
 from .calc import phase, intensity, psf, delta_wavefront
 from .unwrap import simple_unwrap_1d
+from .units import *
 
 
 def plot_wavefront(field, mask_r=None, dimension=2, title=''):
@@ -130,7 +131,7 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
 
 
 def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
-                   title=''):
+                   unit='µm', title=''):
     """Plot the intensity.
 
     Plot the intensity of light field using matplotlib.
@@ -196,7 +197,11 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
             mask = patches.Circle([0, 0], mask_r, fc='none', ec='none')
             ax.add_patch(mask)
             im.set_clip_path(mask)
-            ax.set_xlabel('Size [mm]')
+        xticklabels = ax.get_xticks() / µm
+        yticklabels = ax.get_yticks() / µm
+        ax.set_xticklabels(xticklabels.astype(int))
+        ax.set_yticklabels(yticklabels.astype(int))
+        ax.set_xlabel('Size [%s]' % unit)
         fig.colorbar(im)
     else:
         # fig.set_size_inches(6, 2)

@@ -60,7 +60,7 @@ def propagation(field, lens, z):
     return field
 
 
-def near_field_propagation(field, lens, z, mag=1):
+def near_field_propagation(field, lens, z, mag=1, coord='cartesian'):
     """
     Calculate the light field after passing through a lens.
 
@@ -90,9 +90,6 @@ def near_field_propagation(field, lens, z, mag=1):
         L = int((N - field.N) / 2)
         R = L + field.N
         complex_amp[L:R, L:R] = field.complex_amp
-        field.complex_amp = complex_amp
-        field.size = size
-        field.N = N
     # elif lens.D <= field.size:
     else:
         size = field.size if z <= 2 * lens.f\
@@ -107,9 +104,10 @@ def near_field_propagation(field, lens, z, mag=1):
         L_in = int((field.N - lens_N) / 2)
         R_in = L_in + lens_N
         complex_amp[L:R, L:R] = field.complex_amp[L_in:R_in, L_in:R_in]
-        field.complex_amp = complex_amp
-        field.size = size
-        field.N = N
+
+    field.complex_amp = complex_amp
+    field.size = size
+    field.N = N
 
     x = np.linspace(-size / 2, size / 2, N)
     X, Y = np.meshgrid(x, x)
@@ -118,15 +116,17 @@ def near_field_propagation(field, lens, z, mag=1):
 
     # switch - case
     def simple_lens():
-        phi = -k * (X**2 + Y**2) / (2 * lens.f)
+        f = lens.f if coord == 'cartesian' else 10
+        phi = -k * (X**2 + Y**2) / (2 * f)
         return phi
 
     def cylindrical_lens():
+        f = lens.f if coord == 'cartesian' else 10
         if lens.direction == 0:
             x = X
         else:
             x = Y
-        phi = -k * (X**2) / (2 * lens.f)
+        phi = -k * (X**2) / (2 * f)
         return phi
 
     options = {
@@ -141,8 +141,51 @@ def near_field_propagation(field, lens, z, mag=1):
     # complex amplitude after passing through lens
     field.complex_amp *= np.exp(1j * phi)
     field.complex_amp[R >= field.size / 2] = 0
+
     # complex amplitude passing the distance z
-    if z != 0:
-        field = fresnel(field, z)
+    if coord == 'Cartesian':
+        if z != 0:
+            field = fresnel(field, z)
+    elif coord == 'spherical':
+        large_number = 1e7
+        tiny_number = 1e-9
+        f = lens.f
+        curvature = field.curvature
+        if f == z:
+            # f += tiny_number
+            f_ = 10
+            f = f_ * lens.f / (f_ - lens.f)
+        if curvature != 0:
+            f1 = 1 / curvature
+        else:
+            f1 = large_number * field.size**2 / field.wavelength
+        if f + f1 != 0:
+            f = (f * f1) / (f + f1)
+        else:
+            f = large_number * field.size**2 / field.wavelength
+        z1 = -z * f / (z - f)
+        if z1 < 0:
+            raise ValueError('Spherical coordinate error: distance < 0.')
+        field = fresnel(field, z1)
+        amp_scale = (f - z) / f
+        curvature = -1 / (z - f)
+        field.size *= amp_scale
+        field.complex_amp /= amp_scale
+        field.curvature = curvature
+        if curvature != 0:
+            f_ = -1 / curvature
+            # k = 2 * np.pi / field.wavelength
+            h, w = field.N, field.N
+            cy, cx = int(h / 2), int(w / 2)
+            Y, X = np.mgrid[:h, :w]
+            dx = field.size / field.N
+            Y = (Y - cy) * dx
+            X = (X - cx) * dx
+            R = X**2 + Y**2
+            phi = R * k / (2 * f_)
+            field.complex_amp *= np.exp(1j * phi)
+            field.curvature = 0
+    else:
+        raise ValueError('Coordinate error')
 
     return field

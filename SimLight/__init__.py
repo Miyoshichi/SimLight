@@ -12,6 +12,7 @@
 """
 
 from ._version import __version__
+
 from .field import Field, PlaneWave, SphericalWave, Gaussian
 from .lens import Lens, CylindricalLens
 from .propagation import propagation, near_field_propagation
@@ -20,6 +21,8 @@ from .calc import (phase, intensity, aberration, sidel_aberration,
 from .aperture import circle_aperture
 from .utils import longitudinal_to_wavefront
 from . import plottools, zernike
+
+from .units import *
 
 sl_version = __version__
 print('SimLight ' + sl_version + '\n')
