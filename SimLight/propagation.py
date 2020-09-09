@@ -114,7 +114,7 @@ def near_field_propagation(field, lens, z, mag=1, coord='cartesian'):
     R = np.sqrt(X**2 + Y**2)
     k = 2 * np.pi / field.wavelength
 
-    # switch - case
+    # effect of lens type
     def simple_lens():
         f = lens.f if coord == 'cartesian' else 10
         phi = -k * (X**2 + Y**2) / (2 * f)
@@ -122,19 +122,18 @@ def near_field_propagation(field, lens, z, mag=1, coord='cartesian'):
 
     def cylindrical_lens():
         f = lens.f if coord == 'cartesian' else 10
-        if lens.direction == 0:
-            x = X
-        else:
+        if lens.direction == 1:
             x = Y
-        phi = -k * (X**2) / (2 * f)
+        else:
+            x = X
+        phi = -k * (x**2) / (2 * f)
         return phi
 
-    options = {
+    lens_types = {
         'lens': simple_lens,
         'cylindrical lens': cylindrical_lens
     }
-
-    phi = options[lens.lens_type]()
+    phi = lens_types[lens.lens_type]()
     if lens.f < 0:
         phi = -phi
 
@@ -143,14 +142,20 @@ def near_field_propagation(field, lens, z, mag=1, coord='cartesian'):
     field.complex_amp[R >= field.size / 2] = 0
 
     # complex amplitude passing the distance z
-    if coord == 'Cartesian':
+    # cartesian coordinate method
+    def cartesian_coordinate():
         if z != 0:
-            field = fresnel(field, z)
-    elif coord == 'spherical':
+            return fresnel(field, z)
+        else:
+            raise ValueError('Propagation distance error.')
+
+    # spherical coordinate method
+    def spherical_coordinate():
         large_number = 1e7
         tiny_number = 1e-9
         f = lens.f
         curvature = field.curvature
+
         if f == z:
             # f += tiny_number
             f_ = 10
@@ -163,29 +168,37 @@ def near_field_propagation(field, lens, z, mag=1, coord='cartesian'):
             f = (f * f1) / (f + f1)
         else:
             f = large_number * field.size**2 / field.wavelength
+
         z1 = -z * f / (z - f)
         if z1 < 0:
-            raise ValueError('Spherical coordinate error: distance < 0.')
-        field = fresnel(field, z1)
+            raise ValueError('Spherical coordinate error: negative distance.')
+
+        new_field = fresnel(field, z1)
         amp_scale = (f - z) / f
         curvature = -1 / (z - f)
-        field.size *= amp_scale
-        field.complex_amp /= amp_scale
-        field.curvature = curvature
+        new_field.size *= amp_scale
+        new_field.complex_amp /= amp_scale
+        new_field.curvature = curvature
+
         if curvature != 0:
             f_ = -1 / curvature
-            # k = 2 * np.pi / field.wavelength
-            h, w = field.N, field.N
+            h, w = new_field.N, new_field.N
             cy, cx = int(h / 2), int(w / 2)
             Y, X = np.mgrid[:h, :w]
-            dx = field.size / field.N
+            dx = new_field.size / new_field.N
             Y = (Y - cy) * dx
             X = (X - cx) * dx
             R = X**2 + Y**2
             phi = R * k / (2 * f_)
-            field.complex_amp *= np.exp(1j * phi)
-            field.curvature = 0
-    else:
-        raise ValueError('Coordinate error')
+            new_field.complex_amp *= np.exp(1j * phi)
+            new_field.curvature = 0
+
+        return new_field
+
+    coords = {
+        'cartesian': cartesian_coordinate,
+        'spherical': spherical_coordinate
+    }
+    field = coords[coord]()
 
     return field
