@@ -2,10 +2,12 @@
 
 from setuptools import setup
 
+from SimLight._version import __version__
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-exec(open('./SimLight/_version.py').read())
+# exec(open('./SimLight/_version.py').read())
 
 setup(
     name='SimLight',

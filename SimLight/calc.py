@@ -138,8 +138,8 @@ def aberration(field, zernike):
     field = sl.Field.copy(field)
 
     N = field.N
-    size = field.size
-    k = 2 * np.pi / field.wavelength
+    # size = field.size
+    k = 2 * np.pi / (field.wavelength * 1e6)
     n = zernike.n
     m = zernike.m
     norm = zernike.norm

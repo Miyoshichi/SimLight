@@ -58,7 +58,7 @@ class Field:
     def zernike_aberration(self):
         pass
 
-    def plot_wavefront(self, mask_r=None, dimension=2, title=''):
+    def plot_wavefront(self, mask_r=None, dimension=2, unit='mm', title=''):
         """
         Plot the wavefront of light field using matplotlib.
 
@@ -75,9 +75,10 @@ class Field:
         """
         mask_r = mask_r
         dimension = dimension
+        unit = unit
         title = title
         field = [self._wavelength, self._size, self._N, self._complex_amp]
-        plot_wavefront(field, mask_r, dimension, title)
+        plot_wavefront(field, mask_r, dimension, unit, title)
 
     def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, mag=1,
                        unit='µm', title=''):

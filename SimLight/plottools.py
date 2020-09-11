@@ -21,7 +21,7 @@ from .unwrap import simple_unwrap_1d
 from .units import *
 
 
-def plot_wavefront(field, mask_r=None, dimension=2, title=''):
+def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
     """Plot the wavefront.
 
     Plot the wavefront of light field using matplotlib.
@@ -32,10 +32,12 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
             A light field.
         mask_r : float, optional, from 0 to 1, default None
             Radius of a circle mask.
-        dimension : int, optional, {2, 3}, default 2
+        dimension : int, optional, {1, 2, 3}, default 2
             Dimension of the showing wavefront, where
                 2 for surface,
                 3 for 3d.
+        unit : str, optional, {'m', 'cm', 'mm', 'um', 'µm', 'nm'}, default 'µm'
+            Unit used for FOV.
         title : str, optional
             Title of the figure.
     """
@@ -61,7 +63,18 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
     else:
         raise ValueError('Invalid light field.')
 
-    phase_ = wavelength * phase_ / (2 * np.pi)
+    # unit
+    units = {
+        'm': m,
+        'cm': cm,
+        'mm': mm,
+        'um': µm,
+        'µm': µm,
+        'nm': nm
+    }
+    unit_ = units[unit]
+
+    phase_ = wavelength * phase_ / (2 * np.pi) / µm
 
     fig = plt.figure()
 
@@ -87,6 +100,11 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
                                   fc='none', ec='none',)
             ax.add_patch(mask)
             im.set_clip_path(mask)
+        xticklabels = ax.get_xticks() / unit_
+        yticklabels = ax.get_yticks() / unit_
+        ax.set_xticklabels(xticklabels.astype(int))
+        ax.set_yticklabels(yticklabels.astype(int))
+        ax.set_xlabel('Size [%s]' % unit)
         ax.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
                 transform=ax.transAxes)
         ax.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
@@ -104,6 +122,11 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         stride = math.ceil(N / 25)
         im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
                              cmap='rainbow', vmin=min_value, vmax=max_value)
+        xticklabels = ax.get_xticks() / mm
+        yticklabels = ax.get_yticks() / mm
+        ax.set_xticklabels(xticklabels.astype(int))
+        ax.set_yticklabels(yticklabels.astype(int))
+        ax.set_xlabel('Size [%s]' % unit)
         ax.set_zlabel('Wavefront [λ]')
         ax.text2D(0.00, 0.95, PV, fontsize=12, horizontalalignment='left',
                   transform=ax.transAxes)
@@ -121,7 +144,9 @@ def plot_wavefront(field, mask_r=None, dimension=2, title=''):
         else:
             X = np.linspace(-size / 2, size / 2, phase_.shape[0])
             im = ax.plot(X, phase_[center])
-        ax.set_xlabel('Size [mm]')
+        xticklabels = ax.get_xticks() / mm
+        ax.set_xticklabels(xticklabels.astype(int))
+        ax.set_xlabel('Size [%s]' % unit)
         ax.set_ylabel('Phase [λ]')
 
     if title:
@@ -154,7 +179,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         mag : float, optional, default 1
             Magnification of the figure.
         unit : str, optional, {'m', 'cm', 'mm', 'um', 'µm', 'nm'}, default 'µm'
-            Unit used of FOV.
+            Unit used for FOV.
         title : str, optional, default ''
             Title of the figure.
     """
@@ -197,7 +222,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
     elif mag > 1:
         lower = int(intensity_.shape[0] * (mag - 1) / 2)
         upper = int(intensity_.shape[0] * (mag + 1) / 2)
-        new_intensity = np.zeros(lower + upper, lower + upper)
+        new_intensity = np.zeros((lower + upper, lower + upper))
         new_intensity[lower:upper, lower:upper] = intensity_
         intensity_ = new_intensity
         size *= mag
@@ -356,7 +381,7 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
         mag : float, optional, default 1
             Magnification of the figure.
         unit : str, optional, {'m', 'cm', 'mm', 'um', 'µm', 'nm'}, default 'µm'
-            Unit used of FOV.
+            Unit used for FOV.
         title : list, optional, default ''
             Title of the figure.
 
@@ -391,6 +416,7 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
         new_intensity = np.zeros((lower + upper, lower + upper))
         new_intensity[lower:upper, lower:upper] = intensities_[index]
         intensities.append(new_intensity)
+    intensities = np.array(intensities)
 
     if norm_type > 0:
         max_value = np.max(intensities[0])
@@ -561,7 +587,7 @@ def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
     plt.show()
 
 
-def plot_dm_wavefront(field, K, mask_r=None, title=''):
+def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
     """Plot deformable mirror concerned graphs.
 
     Plot the stroke of each actuators and the generated compensation
@@ -596,6 +622,20 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
         phase_ = phase(field[3], unwrap=unwrap)
     else:
         raise ValueError('Invalid light field.')
+
+    # unit conversion
+    wavelength /= µm
+
+    # unit
+    units = {
+        'm': m,
+        'cm': cm,
+        'mm': mm,
+        'um': µm,
+        'µm': µm,
+        'nm': nm
+    }
+    unit_ = units[unit]
 
     phase_ = wavelength * phase_ / (2 * np.pi)
     x_dm = np.linspace((-K + 1) / 2, (K - 1) / 2, K)
@@ -682,6 +722,11 @@ def plot_dm_wavefront(field, K, mask_r=None, title=''):
     im2 = ax2.imshow(dm_wavefront, extent=extent, cmap='rainbow',
                      vmin=min_value2, vmax=max_value2)
     fig2.colorbar(im2)
+    xticklabels = ax2.get_xticks() / mm
+    yticklabels = ax2.get_yticks() / mm
+    ax2.set_xticklabels(xticklabels.astype(int))
+    ax2.set_yticklabels(yticklabels.astype(int))
+    ax2.set_xlabel('Size [%s]' % unit)
     ax2.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
              transform=ax2.transAxes)
     ax2.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',

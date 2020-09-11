@@ -12,4 +12,5 @@ m = 1.0
 cm = 1e-2 * m
 mm = 1e-3 * m
 µm = 1e-6 * m
+um = µm
 nm = 1e-9 * m

@@ -12,6 +12,7 @@ import matplotlib.patches as patches
 
 import SimLight as sl
 from .calc import phase
+from .units import *
 
 
 def pv(phase, mask=False):
@@ -143,7 +144,7 @@ def zernike_to_sidel(zernike_coefficients):
     return sidel_coefficients
 
 
-def longitudinal_to_wavefront(lens, longitude, wavelength=0.550):
+def longitudinal_to_wavefront(lens, longitude, wavelength=0.550*µm):
     """Covert the longitudinal spherical aberration function to light field.
 
     Using the longitudinal spherical aberration function to generate
@@ -153,7 +154,7 @@ def longitudinal_to_wavefront(lens, longitude, wavelength=0.550):
     ----------
         lens : Lens
             The lens with spherical aberration.
-        longitude : list or array-like
+        longitudinal : list or array-like
             The longitudinal spherical aberration funciton of the lens.
         wavelength : float, optional, default 0.550
             The wavelenth of used light.
@@ -167,12 +168,16 @@ def longitudinal_to_wavefront(lens, longitude, wavelength=0.550):
     ----------
         Two figures of longitudinal aberration and wavefront.
     """
-    D = lens.D
-    f = lens.f
+    # unit conversion
+    D = lens.D / mm  # m -> mm
+    f = lens.f / mm  # m -> mm
+    wavelength /= µm  # m -> µm
+
     mask_r = 1
     N = len(longitude)
     center = int(N / 2)
     k = 2 * np.pi / wavelength
+
     if (np.abs(np.max(longitude[center, center:])) >
             np.abs(np.min(longitude[center, center:]))):
         l_max_value = np.abs(np.max(longitude[center, center:]) * 2.5)
@@ -184,11 +189,11 @@ def longitudinal_to_wavefront(lens, longitude, wavelength=0.550):
     rho = np.sqrt(X**2 + Y**2) / (D / 2)
 
     delta_w = longitude * D / -f**2
-    delta_W = delta_w / (wavelength * 1e-3 / (2 * np.pi))
+    delta_W = delta_w / (wavelength * (µm / mm) / (2 * np.pi))
     W = delta_W * rho / 4
     varphi = W * k
 
-    field = sl.PlaneWave(wavelength, D, N)
+    field = sl.PlaneWave(wavelength * µm, D * mm, N)
     field.complex_amp *= np.exp(-1j * varphi)
     phase_ = phase(field, unwrap=True)
     phase_ = wavelength * phase_ / (2 * np.pi)
@@ -218,6 +223,7 @@ def longitudinal_to_wavefront(lens, longitude, wavelength=0.550):
     mask = patches.Circle([0, 0], D * mask_r / 2, fc='none', ec='none',)
     ax2.add_patch(mask)
     im2.set_clip_path(mask)
+    ax2.set_xlabel('Size [mm]')
     ax2.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
              transform=ax2.transAxes)
     ax2.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
