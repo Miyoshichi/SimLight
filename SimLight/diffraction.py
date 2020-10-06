@@ -9,6 +9,8 @@ import numpy as np
 import scipy.special
 from pyfftw.interfaces.numpy_fft import fft2, ifft2
 
+import SimLight as sl
+
 
 def fresnel(field, z):
     """
@@ -23,6 +25,9 @@ def fresnel(field, z):
         field: tuple
             The diffracted light field.
     """
+
+    field = sl.Field.copy(field)
+
     N = field.N
     dx = field.size / field.N
     kz = 2 * np.pi / field.wavelength * z

@@ -12,8 +12,13 @@ __pycache__/
 *.pyc
 
 # dev files
+*.m
 *.ipynb
 !example.ipynb
+
+# saved data files
+*.npy
+*.mat
 
 # images
 *.jpeg

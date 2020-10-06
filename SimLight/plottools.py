@@ -266,6 +266,49 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
     plt.show()
 
 
+def plot_vertical_intensity(field_3d, norm_type=0, title=''):
+    """Plot the intensity in vertical direction.
+
+    Plot the intensity of light field in vertical direction using
+    matplotlib.
+
+    docstring
+    """
+    # check of input parameters
+    if norm_type:
+        if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
+            raise ValueError('Invalid type of normalization.')
+    # if isinstance(field, sl.Field) is True:
+    #     size = field.size
+    #     intensity_ = intensity(field, norm_type=norm_type)
+    # else:
+    #     raise ValueError('Invalid light field.')
+
+    complex_amp_3d = []
+    for field in field_3d:
+        complex_amp_3d.append(field.complex_amp)
+    complex_amp_3d = np.array(complex_amp_3d)
+
+    z = complex_amp_3d.shape[0]  # NOTE optical axis length (z)
+    h_v = complex_amp_3d.shape[1]  # NOTE vertical axis length (y)
+    h_w = complex_amp_3d.shape[2]  # NOTE horizontal axis length (x)
+    center_z = int(z / 2 - 1)
+    center_y = int(h_v / 2 - 1)
+    center_x = int(h_w / 2 - 1)
+
+    vertical_field = complex_amp_3d[:, :, center_x]
+    vertical_intensity = intensity(vertical_field, norm_type=norm_type)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    im = ax.imshow(vertical_intensity, cmap='gist_gray')
+
+    if title:
+        ax.set_title(title)
+
+    plt.show()
+
+
 def plot_two_intensities_diff(field1, field2,
                               label1='Reference', label2='Reality',
                               norm_type=0, mag=1, title=''):
