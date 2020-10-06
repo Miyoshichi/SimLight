@@ -12,8 +12,8 @@ __pycache__/
 *.pyc
 
 # dev files
-*.m
-*.ipynb
+# *.m
+# *.ipynb
 !example.ipynb
 
 # saved data files
