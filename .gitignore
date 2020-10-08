@@ -9,12 +9,12 @@ build/
 
 # cache
 __pycache__/
-*.pyc
+*.py[cod]
 
 # dev files
-# *.m
-# *.ipynb
-!example.ipynb
+*.m
+*test.*
+*dev.*
 
 # saved data files
 *.npy
