@@ -266,6 +266,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
     plt.show()
 
 
+# NOTE testing
 def plot_vertical_intensity(field_3d, norm_type=0, title=''):
     """Plot the intensity in vertical direction.
 
@@ -289,19 +290,32 @@ def plot_vertical_intensity(field_3d, norm_type=0, title=''):
         complex_amp_3d.append(field.complex_amp)
     complex_amp_3d = np.array(complex_amp_3d)
 
-    z = complex_amp_3d.shape[0]  # NOTE optical axis length (z)
-    h_v = complex_amp_3d.shape[1]  # NOTE vertical axis length (y)
-    h_w = complex_amp_3d.shape[2]  # NOTE horizontal axis length (x)
+    z = complex_amp_3d.shape[0]  # optical axis pixels (z)
+    h_v = complex_amp_3d.shape[1]  # vertical axis pixels (y)
+    h_w = complex_amp_3d.shape[2]  # horizontal axis pixels (x)
     center_z = int(z / 2 - 1)
     center_y = int(h_v / 2 - 1)
     center_x = int(h_w / 2 - 1)
-
     vertical_field = complex_amp_3d[:, :, center_x]
     vertical_intensity = intensity(vertical_field, norm_type=norm_type)
 
-    fig = plt.figure()
+    dx = 0.1 * µm  # dx in optical axis (z)
+    z_range = z * dx
+    x_range = field_3d[0].size
+    aspect_ratio = z_range / x_range
+    # print(z_range / µm, x_range / µm, aspect_ratio)
+
+    # fig = plt.figure()
+    fig = plt.figure(figsize=(2.4, 2.4 * aspect_ratio))
     ax = fig.add_subplot(111)
-    im = ax.imshow(vertical_intensity, cmap='gist_gray')
+    extent = [-x_range / 2, x_range / 2, 0, z_range]
+    im = ax.imshow(vertical_intensity, cmap='hot', extent=extent)
+    xticklabels = ax.get_xticks() / µm
+    yticklabels = ax.get_yticks() / µm
+    ax.set_xticklabels(xticklabels.astype(np.float16))
+    ax.set_yticklabels(yticklabels.astype(int))
+    ax.set_xlabel('Size [µm]')
+    ax.set_ylabel('Distance [µm]')
 
     if title:
         ax.set_title(title)

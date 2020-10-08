@@ -62,6 +62,7 @@ def propagation(field, lens, z):
     return field
 
 
+# NOTE testing
 def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                            coord='cartesian'):
     """
@@ -121,12 +122,12 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
 
     # effect of lens type
     def simple_lens():
-        f = lens.f if coord == 'cartesian' else 10
+        f = lens.f if coord == 'cartesian' else 10 * m
         phi = -k * (X**2 + Y**2) / (2 * f)
         return phi
 
     def cylindrical_lens():
-        f = lens.f if coord == 'cartesian' else 10
+        f = lens.f if coord == 'cartesian' else 10 * m
         if lens.direction == 1:
             x = Y
         else:
@@ -207,46 +208,60 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         'cartesian': cartesian_coordinate,
         'spherical': spherical_coordinate
     }
-    field = coords[coord](z)
+    out_field = coords[coord](z)
 
     if return_3d_field:
+        # defines 3d field range
         # TODO auto foucs calculation
         # dx = field.size / field.N
         dx = 0.1 * µm
-        delta_z = 5 * µm
+        delta_z = 25 * µm
         delta_N = int(delta_z / dx)
-        z_range = np.linspace(z - delta_z, lens.f, delta_N)
+        z_range = np.linspace(z - delta_z, z, delta_N)
+
+        # pads light fields to same size
+        print('====== Padding to same size ======')
         for z_ in z_range:
             field_3d.append(coords[coord](z_))
-        max_size = field_3d[0].size
+        max_size = field_3d[-1].size
         for field_ in field_3d:
             if field_.size > max_size:
                 max_size = field_.size
         for index, field_ in enumerate(field_3d):
-            print('\rPadding: %d/%d' % (index + 1, len(field_3d)), end='')
             frac = max_size / field_.size
             lower = int(field_.complex_amp.shape[0] * (frac - 1) / 2)
             upper = int(field_.complex_amp.shape[0] * (frac + 1) / 2)
-            new_complex_amp = np.ones([lower + upper, lower + upper],
-                                      dtype=np.complex)
+            # prints padding progress
+            print(('\r%.2f%% (%d / %d) [%d => %d]' %
+                   ((index + 1) / len(field_3d) * 100,
+                    index + 1,
+                    len(field_3d),
+                    field_.N,
+                    lower + upper)),
+                  end='')
+            new_complex_amp = np.zeros([lower + upper, lower + upper],
+                                       dtype=np.complex)
             new_complex_amp[lower:upper, lower:upper] = field_.complex_amp
             field_.complex_amp = new_complex_amp
             field_.size = max_size
             field_.N = lower + upper
-        # min_N = field_3d[0].N
-        # for field_ in field_3d:
-        #     if field_.N < min_N:
-        #         min_N = field_.N
+
+        # interpolates light fields to same pixels
+        print('\n====== Interpolating to same pixels ======')
         field_3d_N = []
         for field_ in field_3d:
             field_3d_N.append(field_.N)
         median_N = int(np.median(field_3d_N))
-        # for field_ in field_3d:
         for index, field_ in enumerate(field_3d):
-            # progress
-            print('\rInterpolating: %d/%d' % (index + 1, len(field_3d)),
+            # prints interpolating progress
+            print(('\r%.2f%% (%d / %d) [%d => %d]' %
+                   ((index + 1) / len(field_3d) * 100,
+                    index + 1,
+                    len(field_3d),
+                    field_.N,
+                    median_N)),
                   end='')
-            # FIXME wrong resize alogrithm
+            # TODO more effective resize alogrithm
             # before interpolating
             x = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
             y = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
@@ -265,6 +280,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             field_.complex_amp = (resized_real(x_, y_) +
                                   resized_imag(x_, y_) * 1j)
             field_.N = median_N
-        return field, field_3d
+
+        return out_field, field_3d
     else:
-        return field
+        return out_field
