@@ -157,8 +157,8 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
 
     # spherical coordinate method
     def spherical_coordinate(z_):
-        large_number = 1e7
-        tiny_number = 1e-9
+        large_number = 1e7 * m
+        tiny_number = 1 * nm
         f = lens.f
         # size = field.size
         wavelength = field.wavelength
@@ -168,6 +168,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             # f += tiny_number
             f_ = 10 * m
             f = f_ * lens.f / (f_ - lens.f)
+            z_ -= tiny_number
         if curvature != 0:
             f1 = 1 / curvature
         else:
@@ -216,8 +217,9 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         # dx = field.size / field.N
         dx = 0.1 * µm
         delta_z = 25 * µm
+        fix = 1000 * nm
         delta_N = int(delta_z / dx)
-        z_range = np.linspace(z - delta_z, z, delta_N)
+        z_range = np.linspace(z - delta_z - fix, z - fix, delta_N)
 
         # pads light fields to same size
         print('====== Padding to same size ======')

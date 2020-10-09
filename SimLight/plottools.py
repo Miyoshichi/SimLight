@@ -308,7 +308,7 @@ def plot_vertical_intensity(field_3d, norm_type=0, title=''):
     # fig = plt.figure()
     fig = plt.figure(figsize=(2.4, 2.4 * aspect_ratio))
     ax = fig.add_subplot(111)
-    extent = [-x_range / 2, x_range / 2, 0, z_range]
+    extent = [-x_range / 2, x_range / 2, 1 * µm, z_range + 1 * µm]
     im = ax.imshow(vertical_intensity, cmap='hot', extent=extent)
     xticklabels = ax.get_xticks() / µm
     yticklabels = ax.get_yticks() / µm
