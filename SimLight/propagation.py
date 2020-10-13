@@ -8,6 +8,8 @@ Created on June 22, 2020
 import math
 import numpy as np
 import scipy.interpolate
+import PIL.Image
+import skimage.transform
 
 import SimLight as sl
 from .diffraction import fresnel, fresnel2, fraunhofer
@@ -220,15 +222,19 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         fix = 1000 * nm
         delta_N = int(delta_z / dx)
         z_range = np.linspace(z - delta_z - fix, z - fix, delta_N)
+        # z_range = np.linspace(z - fix, z - delta_z - fix, delta_N)
 
         # pads light fields to same size
         print('====== Padding to same size ======')
         for z_ in z_range:
             field_3d.append(coords[coord](z_))
-        max_size = field_3d[-1].size
+        field_3d_size = []
         for field_ in field_3d:
-            if field_.size > max_size:
-                max_size = field_.size
+            field_3d_size.append(field_.size)
+            # print(field_.size / µm)
+        max_size = np.max(field_3d_size)
+        # min_size = np.min(field_3d_size)
+        # print(max_size / µm, min_size / µm)
         for index, field_ in enumerate(field_3d):
             frac = max_size / field_.size
             lower = int(field_.complex_amp.shape[0] * (frac - 1) / 2)
@@ -264,23 +270,43 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                     median_N)),
                   end='')
             # TODO more effective resize alogrithm
-            # before interpolating
-            x = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
-            y = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
-            # after interpolating
-            x_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
-            y_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
+            # interpolating method
+            # # before interpolating
+            # x = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
+            # y = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
+            # # after interpolating
+            # x_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
+            # y_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
             # interpolates real part and imagine part respectively
+            # complex_amp_real = np.real(field_.complex_amp)
+            # complex_amp_imag = np.imag(field_.complex_amp)
+            # resized_real = scipy.interpolate.interp2d(x, y,
+            #                                           complex_amp_real,
+            #                                           kind='cubic')
+            # resized_imag = scipy.interpolate.interp2d(x, y,
+            #                                           complex_amp_imag,
+            #                                           kind='cubic')
+            # field_.complex_amp = (resized_real(x_, y_) +
+            #                       resized_imag(x_, y_) * 1j)
+            # interpolates real part and imagine part respectively
+            # image resize method
             complex_amp_real = np.real(field_.complex_amp)
             complex_amp_imag = np.imag(field_.complex_amp)
-            resized_real = scipy.interpolate.interp2d(x, y,
-                                                      complex_amp_real,
-                                                      kind='cubic')
-            resized_imag = scipy.interpolate.interp2d(x, y,
-                                                      complex_amp_imag,
-                                                      kind='cubic')
-            field_.complex_amp = (resized_real(x_, y_) +
-                                  resized_imag(x_, y_) * 1j)
+            # uses scikit-image
+            # resized_real = skimage.transform.resize(complex_amp_real,
+            #                                         (median_N, median_N),
+            #                                         order=1)
+            # resized_imag = skimage.transform.resize(complex_amp_imag,
+            #                                         (median_N, median_N),
+            #                                         order=1)
+            # uses pillow
+            resized_real = PIL.Image.fromarray(complex_amp_real).resize(
+                size=(median_N, median_N))
+            resized_imag = PIL.Image.fromarray(complex_amp_imag).resize(
+                size=(median_N, median_N))
+            resized_real = np.asarray(resized_real)
+            resized_imag = np.asarray(resized_imag)
+            field_.complex_amp = (resized_real + resized_imag * 1j)
             field_.N = median_N
 
         return out_field, field_3d
