@@ -267,13 +267,26 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 
 
 # NOTE testing
-def plot_vertical_intensity(field_3d, norm_type=0, title=''):
+def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
     """Plot the intensity in vertical direction.
 
     Plot the intensity of light field in vertical direction using
     matplotlib.
 
-    docstring
+    Parameters
+    ----------
+        field_3d : list of Fields
+            A list of SimLight.Fields of a whole light field.
+        norm_type : int, optional, {0, 1, 2}, default 0
+            Type of normalization, where
+                0 for no normalization,
+                1 for normalize up to 1,
+                2 for normalize up to 255.
+        mag : float, optional, default 1
+            Original parameter used when calling
+            SimLight.near_field_propagation()
+        title : str, optional, default ''
+            Title of the figure.
     """
     # check of input parameters
     if norm_type:
@@ -301,15 +314,19 @@ def plot_vertical_intensity(field_3d, norm_type=0, title=''):
 
     dx = 0.1 * µm  # dx in optical axis (z)
     z_range = z * dx
-    x_range = field_3d[0].size
+    x_range = field_3d[0].size / mag
     aspect_ratio = z_range / x_range
     # print(z_range / µm, x_range / µm, aspect_ratio)
+
+    lower = int(vertical_intensity.shape[1] * ((mag - 1) / (mag * 2)))
+    upper = int(vertical_intensity.shape[1] * ((mag + 1) / (mag * 2)))
+    vertical_intensity_mag = vertical_intensity[:, lower:upper]
 
     # fig = plt.figure()
     fig = plt.figure(figsize=(2.4, 2.4 * aspect_ratio))
     ax = fig.add_subplot(111)
     extent = [-x_range / 2, x_range / 2, 1 * µm, z_range + 1 * µm]
-    im = ax.imshow(vertical_intensity, cmap='hot', extent=extent)
+    im = ax.imshow(vertical_intensity_mag, cmap='hot', extent=extent)
     xticklabels = ax.get_xticks() / µm
     yticklabels = ax.get_yticks() / µm
     ax.set_xticklabels(xticklabels.astype(np.float16))

@@ -13,6 +13,7 @@ import skimage.transform
 
 import SimLight as sl
 from .diffraction import fresnel, fresnel2, fraunhofer
+from .utils import run_time_calc
 from .units import *
 
 
@@ -254,14 +255,14 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             field_.size = max_size
             field_.N = lower + upper
 
-        # interpolates light fields to same pixels
-        print('\n====== Interpolating to same pixels ======')
+        # resizes light fields to same pixels
+        print('\n====== Resizing to same pixels ======')
         field_3d_N = []
         for field_ in field_3d:
             field_3d_N.append(field_.N)
         median_N = int(np.median(field_3d_N))
         for index, field_ in enumerate(field_3d):
-            # prints interpolating progress
+            # prints resizing progress
             print(('\r%.2f%% (%d / %d) [%d => %d]' %
                    ((index + 1) / len(field_3d) * 100,
                     index + 1,
@@ -269,17 +270,18 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                     field_.N,
                     median_N)),
                   end='')
+            # gets real and imagne part of complex amplitudes
+            complex_amp_real = np.real(field_.complex_amp)
+            complex_amp_imag = np.imag(field_.complex_amp)
             # TODO more effective resize alogrithm
-            # interpolating method
+            # # interpolating method
             # # before interpolating
             # x = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
             # y = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
             # # after interpolating
             # x_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
             # y_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
-            # interpolates real part and imagine part respectively
-            # complex_amp_real = np.real(field_.complex_amp)
-            # complex_amp_imag = np.imag(field_.complex_amp)
+            # # interpolates real part and imagine part respectively
             # resized_real = scipy.interpolate.interp2d(x, y,
             #                                           complex_amp_real,
             #                                           kind='cubic')
@@ -288,24 +290,22 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             #                                           kind='cubic')
             # field_.complex_amp = (resized_real(x_, y_) +
             #                       resized_imag(x_, y_) * 1j)
-            # interpolates real part and imagine part respectively
             # image resize method
-            complex_amp_real = np.real(field_.complex_amp)
-            complex_amp_imag = np.imag(field_.complex_amp)
-            # uses scikit-image
+            # # uses scikit-image (high quality, slow speed)
             # resized_real = skimage.transform.resize(complex_amp_real,
             #                                         (median_N, median_N),
             #                                         order=1)
             # resized_imag = skimage.transform.resize(complex_amp_imag,
             #                                         (median_N, median_N),
             #                                         order=1)
-            # uses pillow
-            resized_real = PIL.Image.fromarray(complex_amp_real).resize(
-                size=(median_N, median_N))
-            resized_imag = PIL.Image.fromarray(complex_amp_imag).resize(
-                size=(median_N, median_N))
-            resized_real = np.asarray(resized_real)
-            resized_imag = np.asarray(resized_imag)
+            # uses pillow (low quality, fast speed)
+            resized_real = np.array(
+                PIL.Image.fromarray(complex_amp_real).resize(
+                    size=(median_N, median_N)))
+            resized_imag = np.array(
+                PIL.Image.fromarray(complex_amp_imag).resize(
+                    size=(median_N, median_N)))
+
             field_.complex_amp = (resized_real + resized_imag * 1j)
             field_.N = median_N
 

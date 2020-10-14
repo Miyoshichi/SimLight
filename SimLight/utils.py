@@ -6,6 +6,7 @@ Created on May 22, 2020
 """
 
 import math
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -13,6 +14,20 @@ import matplotlib.patches as patches
 import SimLight as sl
 from .calc import phase
 from .units import *
+
+
+def run_time_calc(func):
+    """
+    Calculate the run time of a function.
+    """
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        ans = func(*args, **kwargs)
+        end = time.time()
+        print('\nRun time of function [%s] is %.2f.' % (func.__name__,
+                                                        end - start))
+        return ans
+    return wrapper
 
 
 def pv(phase, mask=False):
