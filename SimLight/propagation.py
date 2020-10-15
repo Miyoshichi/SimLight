@@ -7,6 +7,7 @@ Created on June 22, 2020
 
 import math
 import numpy as np
+import julia.Main as jl
 import scipy.interpolate
 import PIL.Image
 import skimage.transform
@@ -66,6 +67,7 @@ def propagation(field, lens, z):
 
 
 # NOTE testing
+@run_time_calc
 def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                            coord='cartesian'):
     """
@@ -225,9 +227,12 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         z_range = np.linspace(z - delta_z - fix, z - fix, delta_N)
         # z_range = np.linspace(z - fix, z - delta_z - fix, delta_N)
 
-        # pads light fields to same size
-        print('====== Padding to same size ======')
-        for z_ in z_range:
+        # calculates light fields
+        print('====== Calculating light fields ======')
+        for index, z_ in enumerate(z_range):
+            print('\r%.2f%% (%d / %d)' % ((index + 1) / len(z_range) * 100,
+                                          index + 1,
+                                          len(z_range)), end='')
             field_3d.append(coords[coord](z_))
         field_3d_size = []
         for field_ in field_3d:
@@ -236,6 +241,8 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         max_size = np.max(field_3d_size)
         # min_size = np.min(field_3d_size)
         # print(max_size / µm, min_size / µm)
+        # pads light fields to same size
+        print('\n====== Padding to same size ======')
         for index, field_ in enumerate(field_3d):
             frac = max_size / field_.size
             lower = int(field_.complex_amp.shape[0] * (frac - 1) / 2)
@@ -248,9 +255,11 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                     field_.N,
                     lower + upper)),
                   end='')
-            new_complex_amp = np.zeros([lower + upper, lower + upper],
-                                       dtype=np.complex)
-            new_complex_amp[lower:upper, lower:upper] = field_.complex_amp
+            # new_complex_amp = np.zeros([lower + upper, lower + upper],
+            #                            dtype=np.complex)
+            # new_complex_amp[lower:upper, lower:upper] = field_.complex_amp
+            jl.include('../SimLight/3d_field_helper.jl')
+            new_complex_amp = jl.pad_to_same_size(field_, lower, upper)
             field_.complex_amp = new_complex_amp
             field_.size = max_size
             field_.N = lower + upper
