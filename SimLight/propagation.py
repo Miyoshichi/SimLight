@@ -23,15 +23,17 @@ def propagation(field, lens, z):
     Calculate the light field after passing through a lens without considering
     diffraction.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Filed
             The light field to be calculated.
-        lens: tuple
+        lens : SimLight.Lens
             The lens which a light will pass through.
-        z: float
+        z : float
             Propagation distance after passing through.
-    Returns:
-        field_out: tuple
+    Returns
+    ----------
+        field_out : SimLight.Field
             The light field after passing through a lens.
     """
     k = 2 * np.pi / field.wavelength
@@ -66,28 +68,46 @@ def propagation(field, lens, z):
     return field
 
 
-# NOTE testing
 @run_time_calc
 def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
-                           coord='cartesian'):
+                           coord='cartesian', flag='py'):
     """
     Calculate the light field after passing through a lens.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Fields
             The light field to be calculated.
-        lens: tuple
+        lens : SimLight.Lens
             The lens which a light will pass through.
-        z: float
+        z : float
             Propagation distance after passing through.
-    Returns:
-        field_out: tuple
+        return_3d_field : boolen, optional, default False
+            Whether return a 3D light field.
+        mag : float, optional, default 1
+            Magnification of the light field.
+        coord : str, optional, {'cartesian', 'spherical'},
+        default 'cartesian'
+            Which coordinate system to use.
+        flag : str, optional, {'py', 'jl'}, default 'py'
+            Valid only when calculating 3D light field, 'py' for python and
+            'jl' for Julia.
+    Returns
+    ----------
+        field_out: SimLight.Field
             The light field after passing through a lens.
-        field_3d: tuple
+        field_3d: list
+            The list of the 3D field.
     """
     # check of input parameters
     if z < 0:
         raise ValueError('The propagation distance cannot be negative.')
+    if flag is 'py':
+        pass
+    elif flag is 'jl':
+        jl.include('../SimLight/3d_field_helper.jl')
+    else:
+        raise ValueError('Unspported language.')
 
     field = sl.Field.copy(field)
     field_3d = []
@@ -255,12 +275,16 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                     field_.N,
                     lower + upper)),
                   end='')
-            # new_complex_amp = np.zeros([lower + upper, lower + upper],
-            #                            dtype=np.complex)
-            # new_complex_amp[lower:upper, lower:upper] = field_.complex_amp
-            jl.include('../SimLight/3d_field_helper.jl')
-            new_complex_amp = jl.pad_to_same_size(field_, lower, upper)
-            field_.complex_amp = new_complex_amp
+            if flag is 'py':
+                new_complex_amp = np.zeros([lower + upper, lower + upper],
+                                           dtype=np.complex)
+                new_complex_amp[lower:upper,
+                                lower:upper] = field_.complex_amp
+            else:
+                new_complex_amp = jl.pad_to_same_size(field_.complex_amp,
+                                                      lower,
+                                                      upper)
+            field_.complex_amp = np.asarray(new_complex_amp)
             field_.size = max_size
             field_.N = lower + upper
 
@@ -283,38 +307,54 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             complex_amp_real = np.real(field_.complex_amp)
             complex_amp_imag = np.imag(field_.complex_amp)
             # TODO more effective resize alogrithm
-            # # interpolating method
-            # # before interpolating
-            # x = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
-            # y = np.linspace(-field_.size / 2, field_.size / 2, field_.N)
-            # # after interpolating
-            # x_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
-            # y_ = np.linspace(-field_.size / 2, field_.size / 2, median_N)
-            # # interpolates real part and imagine part respectively
-            # resized_real = scipy.interpolate.interp2d(x, y,
-            #                                           complex_amp_real,
-            #                                           kind='cubic')
-            # resized_imag = scipy.interpolate.interp2d(x, y,
-            #                                           complex_amp_imag,
-            #                                           kind='cubic')
-            # field_.complex_amp = (resized_real(x_, y_) +
-            #                       resized_imag(x_, y_) * 1j)
-            # image resize method
-            # # uses scikit-image (high quality, slow speed)
-            # resized_real = skimage.transform.resize(complex_amp_real,
-            #                                         (median_N, median_N),
-            #                                         order=1)
-            # resized_imag = skimage.transform.resize(complex_amp_imag,
-            #                                         (median_N, median_N),
-            #                                         order=1)
-            # uses pillow (low quality, fast speed)
-            resized_real = np.array(
-                PIL.Image.fromarray(complex_amp_real).resize(
-                    size=(median_N, median_N)))
-            resized_imag = np.array(
-                PIL.Image.fromarray(complex_amp_imag).resize(
-                    size=(median_N, median_N)))
-
+            if flag is 'py':
+                # # interpolating method
+                # # before interpolating
+                # x = np.linspace(-field_.size / 2,
+                #                 field_.size / 2, field_.N)
+                # y = np.linspace(-field_.size / 2, field_.size / 2,
+                #                 field_.N)
+                # # after interpolating
+                # x_ = np.linspace(-field_.size / 2,
+                #                  field_.size / 2,
+                #                  median_N)
+                # y_ = np.linspace(-field_.size / 2,
+                #                  field_.size / 2,
+                #                  median_N)
+                # # interpolates real part and imagine part respectively
+                # resized_real = scipy.interpolate.interp2d(x,
+                #                                           y,
+                #                                          complex_amp_real,
+                #                                           kind='cubic')
+                # resized_imag = scipy.interpolate.interp2d(x,
+                #                                           y,
+                #                                          complex_amp_imag,
+                #                                           kind='cubic')
+                # field_.complex_amp = (resized_real(x_, y_) +
+                #                       resized_imag(x_, y_) * 1j)
+                # image resize method
+                # # uses scikit-image (high quality, slow speed)
+                # resized_real = skimage.transform.resize(complex_amp_real,
+                #                                         (median_N,
+                #                                          median_N),
+                #                                         order=1)
+                # resized_imag = skimage.transform.resize(complex_amp_imag,
+                #                                         (median_N,
+                #                                          median_N),
+                #                                         order=1)
+                # uses pillow (low quality, fast speed)
+                resized_real = np.array(
+                    PIL.Image.fromarray(complex_amp_real).resize(
+                        size=(median_N, median_N)))
+                resized_imag = np.array(
+                    PIL.Image.fromarray(complex_amp_imag).resize(
+                        size=(median_N, median_N)))
+            # uses julia
+            else:
+                resized_real = np.asarray(
+                    jl.resize_to_same_size(complex_amp_real, median_N))
+                resized_imag = np.asarray(
+                    jl.resize_to_same_size(complex_amp_imag, median_N))
             field_.complex_amp = (resized_real + resized_imag * 1j)
             field_.N = median_N
 
