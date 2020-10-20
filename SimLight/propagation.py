@@ -183,7 +183,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     # spherical coordinate method
     def spherical_coordinate(z_):
         large_number = 1e7 * m
-        tiny_number = 1 * nm
+        tiny_number = 100 * nm
         f = lens.f
         # size = field.size
         wavelength = field.wavelength
@@ -193,7 +193,8 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             # f += tiny_number
             f_ = 10 * m
             f = f_ * lens.f / (f_ - lens.f)
-            z_ -= tiny_number
+        if abs(z_ - f) < 100 * nm:
+            z_ = f - tiny_number if z_ < f else f + tiny_number
         if curvature != 0:
             f1 = 1 / curvature
         else:
@@ -265,8 +266,10 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         print('\n====== Padding to same size ======')
         for index, field_ in enumerate(field_3d):
             frac = max_size / field_.size
-            lower = int(field_.complex_amp.shape[0] * (frac - 1) / 2)
-            upper = int(field_.complex_amp.shape[0] * (frac + 1) / 2)
+            lower = int(math.ceil(field_.complex_amp.shape[0] *
+                                  (frac - 1) / 2))
+            upper = int(math.ceil(field_.complex_amp.shape[0] *
+                                  (frac + 1) / 2))
             # prints padding progress
             print(('\r%.2f%% (%d / %d) [%d => %d]' %
                    ((index + 1) / len(field_3d) * 100,
@@ -278,6 +281,12 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             if flag is 'py':
                 new_complex_amp = np.zeros([lower + upper, lower + upper],
                                            dtype=np.complex)
+                # if lower + upper >= field_.N:
+                #     new_complex_amp[lower:upper,
+                #                     lower:upper] = field_.complex_amp
+                # else:
+                #     new_complex_amp = field.new_complex_amp[lower:upper,
+                #                                             lower:upper]
                 new_complex_amp[lower:upper,
                                 lower:upper] = field_.complex_amp
             else:
