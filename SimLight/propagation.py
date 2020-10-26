@@ -183,7 +183,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     # spherical coordinate method
     def spherical_coordinate(z_):
         large_number = 1e7 * m
-        tiny_number = 100 * nm
+        tiny_number = 1000 * nm
         f = lens.f
         # size = field.size
         wavelength = field.wavelength
@@ -193,7 +193,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             # f += tiny_number
             f_ = 10 * m
             f = f_ * lens.f / (f_ - lens.f)
-        if abs(z_ - f) < 100 * nm:
+        if abs(z_ - f) < tiny_number:
             z_ = f - tiny_number if z_ < f else f + tiny_number
         if curvature != 0:
             f1 = 1 / curvature
@@ -205,9 +205,10 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             f = large_number * size**2 / wavelength
 
         z1 = -z_ * f / (z_ - f)
-        if z1 < 0:
-            raise ValueError(('Spherical coordinate error: '
-                              'negative distance of %f') % z_)
+        # cannot propagate to reversely
+        # if z1 < 0:
+        #     raise ValueError(('Spherical coordinate error: '
+        #                       'negative distance of %f') % z_)
 
         new_field = fresnel(field, z1)
         amp_scale = (f - z_) / f
@@ -243,8 +244,9 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         # dx = field.size / field.N
         dx = 0.1 * µm
         delta_z = 25 * µm
-        fix = 1000 * nm
+        fix = 1 * µm
         delta_N = int(delta_z / dx)
+        # z_range = np.linspace(z - delta_z, z, delta_N)
         z_range = np.linspace(z - delta_z - fix, z - fix, delta_N)
         # z_range = np.linspace(z - fix, z - delta_z - fix, delta_N)
 
@@ -265,7 +267,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         # pads light fields to same size
         print('\n====== Padding to same size ======')
         for index, field_ in enumerate(field_3d):
-            frac = max_size / field_.size
+            frac = abs(max_size / field_.size)
             lower = int(math.ceil(field_.complex_amp.shape[0] *
                                   (frac - 1) / 2))
             upper = int(math.ceil(field_.complex_amp.shape[0] *

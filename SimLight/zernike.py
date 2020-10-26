@@ -34,11 +34,11 @@ class ZernikeCoefficients:
             raise ValueError('The order should be int type')
 
         self._j = j
-        self._n, self._m, self._norm = self.__order(self._j)
+        self._n, self._m, self._norm = self.order(self._j)
         self._coefficients = self.__zernike_coefficients(j, coefficients)
 
-    @staticmethod
-    def __order(j):
+    @classmethod
+    def order(cls, j):
         n = np.zeros(j, dtype=int)
         m = np.zeros(j, dtype=int)
         norm = np.zeros(j)

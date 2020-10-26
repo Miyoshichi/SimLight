@@ -10,6 +10,7 @@ import copy
 import numpy as np
 
 from .plottools import plot_wavefront, plot_intensity
+from .utils import cart2pol
 from .units import *
 
 
@@ -111,6 +112,14 @@ class Field:
         title = title
         field = [self._size, self._complex_amp]
         plot_intensity(field, mask_r, norm_type, dimension, mag, unit, title)
+
+    def zernike_coeffs(self, j):
+        """
+        docstring
+        """
+        x = np.linspace(-self._size / 2, self._size / 2, self._N)
+        X, Y = np.meshgrid(x, x)
+        theta, r = cart2pol(X, Y)
 
     @classmethod
     def copy(cls, field):

@@ -28,7 +28,7 @@ def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
 
     Parameters
     ----------
-        field : Field
+        field : SimLight.Field
             A light field.
         mask_r : float, optional, from 0 to 1, default None
             Radius of a circle mask.
@@ -163,7 +163,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 
     Parameters
     ----------
-        field : Field
+        field : SimLight.Field
             A light field.
         mask_r : float, optional, from 0 to 1, default None
             Radius of a circle mask.
@@ -275,7 +275,7 @@ def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
 
     Parameters
     ----------
-        field_3d : list of Fields
+        field_3d : list of SimLight.Field
             A list of SimLight.Fields of a whole light field.
         norm_type : int, optional, {0, 1, 2}, default 0
             Type of normalization, where
@@ -353,9 +353,9 @@ def plot_two_intensities_diff(field1, field2,
 
     Parameters
     ----------
-        field1 : tuple
+        field1 : SimLight.Field
             Reference light field to compare.
-        field2 : tuple
+        field2 : SimLight.Field
             Another light field to compare.
         label1 : str
             Label of field1.
@@ -439,7 +439,7 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
 
     Parameters
     ----------
-        fields : array-like, Field
+        fields : array-like, SimLight.Field
             Light fields to compare.
         shift : array-like or list, optional, default None
             Shift pixels of the line in intensity.
@@ -562,7 +562,7 @@ def plot_psf(field, aperture_type='circle', dimension=2, title=''):
 
     Parameters
     ----------
-        field : Field
+        field : SimLight.Field
             The light fiedl.
         aperture_type : str, optional, {'circle', 'square'}, default 'circle'
             The shape of the aperture.
@@ -611,7 +611,7 @@ def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
 
     Parameters
     ----------
-        lens : Lens
+        lens : SimLight.Lens
             The lens has the aberration.
         wavelength : float, optional, default 0.550
             The wavelength of the light for calculating the longitudinal
@@ -669,7 +669,7 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
 
     Parameters
     ----------
-        field : Field
+        field : SimLight.Field
             The input light field to be compensated.
         K : int
             The maximum number of actuators in one direction.

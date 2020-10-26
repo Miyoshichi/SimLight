@@ -7,7 +7,10 @@ Created on May 22, 2020
 
 import math
 import numpy as np
+import matlab
+import matlab.engine
 import scipy.interpolate
+import scipy.io
 
 import SimLight as sl
 from .unwrap import simple_unwrap
@@ -17,13 +20,16 @@ def phase(field, unwrap=False):
     """
     Calculate the phase of a light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Field
             The light field to be calculated.
-        unwrap: bool
-            Whether to unwrap the phase. (optional, default is False)
-    Returns：
-        phase:
+        unwrap : bool, optional, {True, False}, default False
+            Whether to unwrap the phase.
+
+    Returns
+    ---------
+        phase : array-like, float
             The phase of the light field.
     """
     if isinstance(field, sl.Field) is True:
@@ -43,16 +49,19 @@ def intensity(field, norm_type=1):
     """
     Calculate the intensity of a light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Field
             The light field to be calculated.
-        norm_type: int
-            Type of normalization. (optional, default is 1).
-            0: no normalization
-            1: normalize to 0~1
-            2: normalize to 0~255
-    Returns：
-        intensity:
+        norm_type : int, optional, {0, 1, 2}, default 0
+            Type of normalization, where
+                0 for no normalization,
+                1 for normalize up to 1,
+                2 for normalize up to 255.
+
+    Returns
+    ----------
+        intensity : array-like, float
             The intensity of the light field.
     """
     if isinstance(field, sl.Field) is True:
@@ -76,15 +85,19 @@ def psf(field, aperture_type='circle'):
     """
     Calculate the point spread function of a light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Field
             The light fiedl.
-        aperture_type: str
-            The shape of the aperture. (optional, default is 'circle')
+        aperture_type : str, optional, {'circle', 'square'},
+        default 'circle'
+            The shape of the aperture.
                 circle: circle aperture
                 square: square aperture
-    Returns:
-        psf:
+
+    Returns
+    ----------
+        psf : array-like, float
             Point spread function of the input light field.
     """
     field = sl.Field.copy(field)
@@ -126,13 +139,16 @@ def aberration(field, zernike):
     """
     Return a aberrated light field due to the input Zernike cofficients.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Field
             The light field to be calculated.
-        zernike: tuple
+        zernike : SimLight.Zernike
             The Zernike Polynomials.
-    Returns:
-        aberrated_field: tuple
+
+    Returns
+    ----------
+        aberrated_field : SimLight.Field
             The aberrated light field.
     """
     field = sl.Field.copy(field)
@@ -189,13 +205,16 @@ def sidel_aberration(field, sidel):
     """
     Return a aberrated light field due to the input Sidel cofficients.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Field
             The light field to be calculated.
-        sidel: tuple
+        sidel : SimLight.Sidel
             The Sernike Polynomials.
-    Returns:
-        aberrated_field: tuple
+
+    Returns
+    ----------
+        aberrated_field : SimLight.Field
             The aberrated light field.
     """
     field = sl.Field.copy(field)
@@ -225,17 +244,64 @@ def sidel_aberration(field, sidel):
     return field
 
 
+def zernike_coeffs(field, j):
+    """
+    Return the Zernike coefficients of wavefront of a light field.
+
+    Parameters
+    ----------
+        field : SimLight.Field
+            A light field.
+        j : int
+            Order of Zernike polynomials.
+
+    Returns
+    ----------
+        coeffs : array-like, float
+            Zernike coefficients.
+    """
+    field = sl.Field.copy(field)
+    wavelength = field.wavelength
+    wavefront = phase(field, unwrap=True)
+
+    # size = field.size
+    # N = field.N
+
+    # x = np.linspace(-size / 2, size / 2, N)
+    # X, Y = np.meshgrid(x, x)
+    # theta, R = cart2pol(X, Y)
+
+    n, m, _ = sl.zernike.ZernikeCoefficients.order(j)
+
+    wavefront = wavefront.tolist()
+    wavefront = matlab.double(wavefront)
+    n = n.tolist()
+    n = matlab.double(n)
+    m = m.tolist()
+    m = matlab.double(m)
+
+    ml = matlab.engine.start_matlab()
+    coeffs = ml.zernike_coeff(wavefront, wavelength, n, m)
+    coeffs = np.asarray(coeffs).flatten()
+    coeffs = np.round_(coeffs, decimals=4)
+
+    return coeffs
+
+
 def delta_wavefront(field, sidel):
     """
     Return the longitude aberration of input light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field: SimLight.Field
             The light field of the lens with aberration.
-        sidel: tuple
+        sidel: SimLight.Sidel
             Sidel coefficients of the lens.
-    Returns:
-        delta_W: array
+
+    Returns
+    ----------
+        delta_W: array-like, float
             Derivative of the aberrated wavefront.
     """
     field = sl.Field.copy(field)
@@ -270,6 +336,20 @@ def delta_wavefront(field, sidel):
 
 def deformable_mirror(field, K):
     """
+    Calculate moving distance of actuators of a deformable mirror.
+
+    Parameters
+    ----------
+        field : SimLight.Field
+            A light field incident on a deformable mirror.
+        K : int
+            Actuators of the deformable mirror in one direction.
+
+    Returns
+    ----------
+        dm_field : SimLight.Field
+            Light field generated by deformable mirror for aberration
+            compensation.
     """
     field = sl.Field.copy(field)
 

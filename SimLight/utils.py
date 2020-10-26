@@ -87,6 +87,15 @@ def rms(phase, mask=False):
     return rms
 
 
+def cart2pol(X, Y):
+    """
+    docstring
+    """
+    theta = np.arctan2(Y, X)
+    R = np.sqrt(X**2 + Y**2)
+    return theta, R
+
+
 def circle_aperature(field, mask_r):
     """Filter the circle aperature of a light field.
 
