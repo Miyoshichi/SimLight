@@ -6,6 +6,7 @@ Created on May 22, 2020
 """
 
 import math
+from matplotlib.pyplot import bar
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -266,7 +267,6 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
     plt.show()
 
 
-# NOTE testing
 def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
     """Plot the intensity in vertical direction.
 
@@ -534,13 +534,15 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
 
     # center = int(intensities[0].shape[0] / 2)
     # X = np.linspace(-size / 2, size / 2, intensities[0].shape[0])
+    cmap = plt.get_cmap('Accent')
+    colors = cmap(np.arange(len(fields)))
     shift_ = np.zeros(len(fields) + 1, dtype=int)
     if shift:
         shift_[:len(shift)] = shift
     for index, intensity_ in enumerate(intensities):
         center = int(intensity_.shape[0] / 2)
         X = np.linspace(-max_size / 2, max_size / 2, intensity_.shape[0])
-        ax.plot(X, intensity_[center + shift_[index]])
+        ax.plot(X, intensity_[center + shift_[index]], color=colors[index])
     ax.grid(True)
     xticklabels = ax.get_xticks() / unit_
     ax.set_xticklabels(xticklabels.astype(int))
@@ -617,7 +619,7 @@ def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
             The wavelength of the light for calculating the longitudinal
             aberration.
         title : str, optional, default ''
-            The titles of the figure.
+            Title of the figure.
     """
     # default parameters
     size = lens.D
@@ -814,5 +816,82 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
     if title:
         ax1.set_title(title[0])
         ax2.set_title(title[1])
+
+    plt.show()
+
+
+def plot_zernike_coeffs(*coeffs, labels=None, title=''):
+    """
+    Plot the coefficients of a Zernike polynomials.
+
+    Parameters
+    ----------
+        coeffs : array-like or list
+            Zernike coefficients.
+        labels ： list, optional, default None
+            Labels of all light fields.
+        title : str, optional, default ''
+            Title of the figure.
+    """
+    figheight = 4.8
+    figwidth = 9.6 * len(coeffs) / 2 if len(coeffs) > 1 else 9.6
+    figsize = (figwidth, figheight)
+
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111)
+
+    width = 0.7 / len(coeffs) if len(coeffs) > 1 else 0.35
+    xticks = np.arange(len(coeffs[0])) + 1
+    cmap_name = 'Accent' if len(coeffs) > 1 else 'Pastel1'
+    cmap = plt.get_cmap(cmap_name)
+    colors = cmap(np.arange(len(coeffs)))
+
+    for index, coeff in enumerate(coeffs):
+        orders = np.arange(len(coeff))
+        shift = (math.ceil(index - len(coeffs) / 2)
+                 if len(coeffs) % 2 is not 0
+                 else index - (len(coeffs) - 1) / 2)
+        locals()['im' + str(index + 1)] = ax.bar(orders + width * shift,
+                                                 coeff,
+                                                 color=colors[index],
+                                                 width=width,
+                                                 edgecolor='white',
+                                                 linewidth=1)
+
+    prop = abs(np.min(coeffs)) / (abs(np.min(coeffs)) + np.max(coeffs))
+    labelpad = 250 * prop + 10
+
+    ax.spines['top'].set_color('none')
+    ax.spines['right'].set_color('none')
+    ax.spines['bottom'].set_position(('data', 0))
+    ax.set_xlabel('Zernike polynomials orders', labelpad=labelpad)
+    ax.set_ylabel('Zernike coefficients (RMS)')
+    ax.set_xticks(np.arange(len(xticks)))
+    ax.set_xticklabels(xticks)
+
+    def autolabel(ims):
+        """
+        Attach a text label above each bar, displaying its height.
+        """
+        for im in ims:
+            height = im.get_height()
+            if height != 0:
+                ax.annotate('{:.3f}'.format(height),
+                            xy=(im.get_x() + im.get_width() / 2, height),
+                            xytext=(0, 3) if height > 0 else (0, -3),
+                            textcoords='offset points',
+                            fontsize='small',
+                            rotation=45,
+                            rotation_mode='anchor',
+                            ha='left' if height > 0 else 'right',
+                            va='bottom' if height > 0 else 'top')
+
+    for i in range(len(coeffs)):
+        autolabel(locals()['im' + str(i + 1)])
+
+    if labels:
+        ax.legend(labels)
+    if title:
+        ax.set_title(title, pad=20)
 
     plt.show()

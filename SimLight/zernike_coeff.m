@@ -2,13 +2,13 @@ function coeffs = zernike_coeff(wavefront, wavelength, n, m)
 %
 % Return the Zernike coefficients of wavefront of a light field.
 %
-% @since 1.0.0
+% @since 0.0.4
 % @param {array} [wavefront] Wavefront for Zernike coefficients calculation.
 % @param {float} [wavelength] Wavelength of source.
 % @param {array} [n] Zernike order.
 % @param {array} [m] Angular frequency.
 % @return {array} [coeffs] Zernike coefficients.
-% @see dependencies
+% @see zernike_fun
 %
 
     wavelength = wavelength * 1e6;

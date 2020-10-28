@@ -1,4 +1,4 @@
-function z = zernike_fun(n,m,r,theta,nflag)
+function z = zernike_fun(n, m, r, theta, nflag)
 %ZERNFUN Zernike functions of order N and frequency M on the unit circle.
 %   Z = ZERNFUN(N,M,R,THETA) returns the Zernike functions of order N
 %   and angular frequency M, evaluated at positions (R,THETA) on the
@@ -42,6 +42,13 @@ function z = zernike_fun(n,m,r,theta,nflag)
 %       4   -4    r^4 * sin(4*theta)             sqrt(10/pi)
 %       ----------------------------------------------------
 %
+%   @param {array} [n] Zernike order.
+%   @param {array} [m] Angular frequency.
+%   @param {array} [r] Radius in spherical coordinate.
+%   @param {array} [theta] Angles in spherical coordinate.
+%   @param {string} [nflag] Normalization.
+%   @return {array} [z] Zernike surface.
+% 
 %   Example 1:
 %
 %       % Display the Zernike function Z(n=5,m=1)
@@ -84,48 +91,48 @@ function z = zernike_fun(n,m,r,theta,nflag)
 
     % Check and prepare the inputs:
     % -----------------------------
-    if ( ~any(size(n)==1) ) || ( ~any(size(m)==1) )
+    if ( ~any(size(n) == 1) ) || ( ~any(size(m) == 1) )
         error('zernfun:NMvectors','N and M must be vectors.')
     end
 
-    if length(n)~=length(m)
+    if length(n) ~= length(m)
         error('zernfun:NMlength','N and M must be the same length.')
     end
 
     n = n(:);
     m = m(:);
-    if any(mod(n-m,2))
+    if any(mod(n - m,2))
         error('zernfun:NMmultiplesof2', ...
             'All N and M must differ by multiples of 2 (including 0).')
     end
 
-    if any(m>n)
+    if any(m > n)
         error('zernfun:MlessthanN', ...
             'Each M must be less than or equal to its corresponding N.')
     end
 
-    if any( r>1 | r<0 )
+    if any( r > 1 | r < 0 )
         error('zernfun:Rlessthan1','All R must be between 0 and 1.')
     end
 
-    if ( ~any(size(r)==1) ) || ( ~any(size(theta)==1) )
+    if ( ~any(size(r) == 1) ) || ( ~any(size(theta) == 1) )
         error('zernfun:RTHvector','R and THETA must be vectors.')
     end
 
     r = r(:);
     theta = theta(:);
     length_r = length(r);
-    if length_r~=length(theta)
+    if length_r ~= length(theta)
         error('zernfun:RTHlength', ...
             'The number of R- and THETA-values must be equal.')
     end
 
     % Check normalization:
     % --------------------
-    if nargin==5 && ischar(nflag)
+    if nargin == 5 && ischar(nflag)
         isnorm = strcmpi(nflag,'norm');
         if ~isnorm
-            error('zernfun:normalization','Unrecognized normalization flag.')
+            error('zernfun:normalization','Unrecognized normalization flag')
         end
     else
         isnorm = false;
@@ -147,34 +154,37 @@ function z = zernike_fun(n,m,r,theta,nflag)
     % Pre-compute the values of r raised to the required powers,
     % and compile them in a matrix:
     % -----------------------------
-    if rpowers(1)==0
-        rpowern = arrayfun(@(p)r.^p,rpowers(2:end),'UniformOutput',false);
-        rpowern = cat(2,rpowern{:});
-        rpowern = [ones(length_r,1) rpowern];
+    if rpowers(1) == 0
+        rpowern = arrayfun(@(p) r.^p,                           ...
+                           rpowers(2:end),                      ...
+                           'UniformOutput',                     ...
+                           false);
+        rpowern = cat(2, rpowern{:});
+        rpowern = [ones(length_r, 1) rpowern];
     else
-        rpowern = arrayfun(@(p)r.^p,rpowers,'UniformOutput',false);
-        rpowern = cat(2,rpowern{:});
+        rpowern = arrayfun(@(p) r.^p, rpowers, 'UniformOutput', false);
+        rpowern = cat(2, rpowern{:});
     end
 
     % Compute the values of the polynomials:
     % --------------------------------------
-    z = zeros(length_r,length(n));
-    for j = 1:length(n)
-        s = 0:(n(j)-m_abs(j))/2;
-        pows = n(j):-2:m_abs(j);
-        for k = length(s):-1:1
-            p = (1-2*mod(s(k),2))* ...
-                    prod(2:(n(j)-s(k)))/              ...
-                    prod(2:s(k))/                     ...
-                    prod(2:((n(j)-m_abs(j))/2-s(k)))/ ...
-                    prod(2:((n(j)+m_abs(j))/2-s(k)));
-            idx = (pows(k)==rpowers);
-            z(:,j) = z(:,j) + p*rpowern(:,idx);
+    z = zeros(length_r, length(n));
+    for j = 1 : length(n)
+        s = 0 : (n(j) - m_abs(j)) / 2;
+        pows = n(j) : -2 : m_abs(j);
+        for k = length(s) : -1 : 1
+            p = (1 - 2 * mod(s(k), 2)) *                        ...
+                    prod(2 : (n(j) - s(k))) /                   ...
+                    prod(2 : s(k)) /                            ...
+                    prod(2 : ((n(j) - m_abs(j)) / 2 - s(k))) /  ...
+                    prod(2 : ((n(j) + m_abs(j)) / 2 - s(k)));
+            idx = (pows(k) == rpowers);
+            z(:, j) = z(:, j) + p * rpowern(:, idx);
         end
         
         if isnorm
-            % z(:,j) = z(:,j)*sqrt((1+(m(j)~=0))*(n(j)+1)/pi);
-            z(:,j) = z(:,j)*sqrt((1+(m(j)~=0))*(n(j)+1));
+            % z(:, j) = z(:, j) *s qrt((1 + (m(j) ~= 0)) * (n(j) + 1) / pi);
+            z(:, j) = z(:, j) * sqrt((1 + (m(j) ~= 0)) * (n(j) + 1));
         end
     end
     % END: Compute the Zernike Polynomials
@@ -182,14 +192,14 @@ function z = zernike_fun(n,m,r,theta,nflag)
 
     % Compute the Zernike functions:
     % ------------------------------
-    idx_pos = m>0;
-    idx_neg = m<0;
+    idx_pos = m > 0;
+    idx_neg = m < 0;
 
     if any(idx_pos)
-        z(:,idx_pos) = z(:,idx_pos).*cos(theta*m_abs(idx_pos)');
+        z(:, idx_pos) = z(:, idx_pos) .* cos(theta * m_abs(idx_pos)');
     end
     if any(idx_neg)
-        z(:,idx_neg) = z(:,idx_neg).*sin(theta*m_abs(idx_neg)');
+        z(:, idx_neg) = z(:, idx_neg) .* sin(theta * m_abs(idx_neg)');
     end
 
 % EOF zernfun

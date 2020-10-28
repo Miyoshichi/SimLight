@@ -5,6 +5,7 @@ Created on May 22, 2020
 @author: Zhou Xiang
 """
 
+import os
 import math
 import numpy as np
 import matlab
@@ -260,6 +261,9 @@ def zernike_coeffs(field, j):
         coeffs : array-like, float
             Zernike coefficients.
     """
+    module_dir = os.path.dirname(sl.__file__)
+    os.chdir(module_dir)
+
     field = sl.Field.copy(field)
     wavelength = field.wavelength
     wavefront = phase(field, unwrap=True)
