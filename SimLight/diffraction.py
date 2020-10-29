@@ -16,13 +16,16 @@ def fresnel(field, z):
     """
     Calculate the near-field Fresnel Diffraction of the light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Filed
             The light field to be calculated.
-        z: float
+        z : float
             Propagation distance.
-    Returns:
-        field: tuple
+
+    Returns
+    ---------
+        field : SimLight.Filed
             The diffracted light field.
     """
 
@@ -126,13 +129,16 @@ def fraunhofer(field, z):
     """
     Calculate the far-field Fraunhofer Diffraction of the light field.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Filed
             The light field to be calculated.
-        z: float
+        z : float
             Propagation distance.
-    Returns:
-        field: tuple
+
+    Returns
+    ----------
+        field: SimLight.Filed
             The diffracted light field.
     """
     field.complex_amp *= np.exp(1j / z)

@@ -18,28 +18,30 @@ class Field:
     """
     A basic light field.
 
-    Args:
-        wavelength: float
-            Physical wavelength of input light, unit: µm.
-        size: float
-            Physical size of input light field, unit: mm.
+    Parameters
+    ----------
+        wavelength : float
+            Physical wavelength of input light.
+        size : float
+            Physical size of input light field.
                 circle: diameter
                 square: side length
-        N: int
+        N : int
             Pixel numbers of input light field in one dimension.
     """
     def __init__(self, wavelength=1.0, size=0, N=0):
         """
         A basic light field.
 
-        Args:
-            wavelength: float
-                Physical wavelength of input light, unit: µm.
-            size: float
-                Physical size of input light field, unit: mm.
+        Parameters
+        ----------
+            wavelength : float
+                Physical wavelength of input light.
+            size : float
+                Physical size of input light field.
                     circle: diameter
                     square: side length
-            N: int
+            N : int
                 Pixel numbers of input light field in one dimension.
         """
         # check of inputted parameters
@@ -60,19 +62,25 @@ class Field:
         pass
 
     def plot_wavefront(self, mask_r=None, dimension=2, unit='mm', title=''):
-        """
+        """Plot the wavefront.
+
         Plot the wavefront of light field using matplotlib.
 
-        Args:
-            mask_r: float
-                Radius of a circle mask. (optional, between 0 and 1,
-                default is None).
-            dimension: int
-                Dimension of figure. (optional, default is 2, i.e. surface)
-                2: surface
-                3: 3d
-            title: str
-                Title of the figure. (optional).
+        Parameters
+        ----------
+            field : SimLight.Field
+                A light field.
+            mask_r : float, optional, from 0 to 1, default None
+                Radius of a circle mask.
+            dimension : int, optional, {1, 2, 3}, default 2
+                Dimension of the showing wavefront, where
+                    2 for surface,
+                    3 for 3d.
+            unit : str, optional, {'m', 'cm', 'mm', 'um', 'µm', 'nm'},
+            default 'µm'
+                Unit used for FOV.
+            title : str, optional
+                Title of the figure.
         """
         mask_r = mask_r
         dimension = dimension
@@ -83,26 +91,32 @@ class Field:
 
     def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, mag=1,
                        unit='µm', title=''):
-        """
+        """Plot the intensity.
+
         Plot the intensity of light field using matplotlib.
 
-        Args:
-            mask_r: float
-                Radius of a circle mask. (optional, between 0 and 1,
-                default is None).
-            norm_type: int
-                Type of normalization. (optional, default is 0)
-                0: no normalization.
-                1: normalize to 0~1.
-                2: normalize to 0~255.
-            dimension: int
-                Dimension of figure. (optional, default is 2, i.e. surface)
-                1: line
-                2: surface
-            mag: float
-                Magnification of the figure. (optional)
-            title: str
-                Title of the figure. (optional).
+        Parameters
+        ----------
+            field : SimLight.Field
+                A light field.
+            mask_r : float, optional, from 0 to 1, default None
+                Radius of a circle mask.
+            norm_type : int, optional, {0, 1, 2}, default 0
+                Type of normalization, where
+                    0 for no normalization,
+                    1 for normalize up to 1,
+                    2 for normalize up to 255.
+            dimension : int, optional, {1, 2}, default 2
+                Dimension of the showing intensity, where
+                    1 for showing the intensity in a line,
+                    2 for showing the intensity in a surface.
+            mag : float, optional, default 1
+                Magnification of the figure.
+            unit : str, optional, {'m', 'cm', 'mm', 'um', 'µm', 'nm'},
+            default 'µm'
+                Unit used for FOV.
+            title : str, optional, default ''
+                Title of the figure.
         """
         mask_r = mask_r
         norm_type = norm_type
@@ -127,11 +141,14 @@ class Field:
         Create a copy of the input light field so that the original field
         would not be changed.
 
-        Args:
-            field: tuple
+        Parameters
+        ----------
+            field : SimLight.Field
                 Input light field to copy.
-        Returns:
-            coppied_field: tuple
+
+        Returns
+        ----------
+            coppied_field : SimLight.Field
                 A new copied light field.
         """
         return copy.deepcopy(field)
@@ -177,28 +194,30 @@ class PlaneWave(Field):
     """
     A plane wave light field.
 
-    Args:
-        wavelength: float
-            Physical wavelength of input light, unit: µm.
-        size: float
-            Physical size of input light field, unit: mm.
+    Parameters
+    ----------
+        wavelength : float
+            Physical wavelength of input light.
+        size : float
+            Physical size of input light field.
                 circle: diameter
                 square: side length
-        N: int
+        N : int
             Pixel numbers of input light field in one dimension.
-        x_tilt: float
+        x_tilt : float
             Tilt coefficient in x direction, unit: rad.
-        y_tilt: float
+        y_tilt : float
             Tilt coefficient in y direciton, unit: rad.
     """
     def __init__(self, wavelength, size, N, x_tilt=0, y_tilt=0):
         """
         A plane wave light field.
 
-        Args:
-            x_tilt: float
+        Parameters
+        ----------
+            x_tilt : float
                 Tilt in x direction, unit: rad.
-            y_tilt: float
+            y_tilt : float
                 Tilt in y direciton, unit: rad.
         """
         super().__init__(wavelength, size, N)
@@ -214,16 +233,17 @@ class PlaneWave(Field):
         Return a tilted light field.
         U = A * exp(ikr - φ0)
 
-        Args:
-            wavelength: float
-                Physical wavelength of input light, unit: µm.
-            size: float
-                Physical size of input light field, unit: mm.
+        Parameters
+        ----------
+            wavelength : float
+                Physical wavelength of input light.
+            size : float
+                Physical size of input light field.
                     circle: diameter
                     square: side length
-            N: int
+            N : int
                 Pixel numbers of input light field in one dimension.
-            tilt: list, [x_tilt, y_tilt]
+            tilt : list, [x_tilt, y_tilt]
                 x_tilt: float
                     Tilt coefficient in x direction, unit: rad.
                 y_tilt: float
@@ -252,28 +272,27 @@ class SphericalWave(Field):
     """
     A spherical wave light field.
 
-    Args:
-        wavelength: float
-            Physical wavelength of input light, unit: µm.
-        size: float
-            Physical size of input light field, unit: mm.
+    Parameters
+    ----------
+        wavelength : float
+            Physical wavelength of input light.
+        size : float
+            Physical size of input light field.
                 circle: diameter
                 square: side length
-        N: int
-            Pixel numbers of input light field in one
-            dimension.
-        z: float
-            The propagation distance of the spherical wave
-            from center, unit: mm.
+        N : int
+            Pixel numbers of input light field in one dimension.
+        z : float
+            The propagation distance of the spherical wave from center.
     """
     def __init__(self, wavelength, size, N, z=0):
         """
         A spherical wave light field.
 
-        Args:
-            z: float
-                The propagation distance of the spherical wave
-                from the center, unit: mm.
+        Parameters
+        ----------s
+            z : float
+                The propagation distance of the spherical wave from center.
         """
         super().__init__(wavelength, size, N)
         self._z = z
@@ -288,18 +307,18 @@ class SphericalWave(Field):
         U = (A / r) * exp(ikr - φ0)
             where r = √(x^2 + y^2 + z^2)
 
-        Args:
-            wavelength: float
-                Physical wavelength of input light, unit: µm.
-            size: float
-                Physical size of input light field, unit: mm.
+        Parameters
+        ----------
+            wavelength : float
+                Physical wavelength of input light.
+            size : float
+                Physical size of input light field.
                     circle: diameter
                     square: side length
-            N: int
+            N : int
                 Pixel numbers of input light field in one dimension.
-            z: float
-                The propagation distance of the spherical wave
-                from center, unit: mm.
+            z : float
+                The propagation distance of the spherical wave from center.
         """
         x = np.linspace(-size / 2, size / 2, N)
         X, Y = np.meshgrid(x, x)
@@ -321,32 +340,32 @@ class Gaussian(Field):
     """
     A gaussian beam light field.
 
-    Args:
-        wavelength: float
-            Physical wavelength of input light, unit: µm.
-        size: float
-            Physical size of input light field, unit: mm.
+    Parameters
+    ----------
+        wavelength : float
+            Physical wavelength of input light.
+        size : float
+            Physical size of input light field.
                 circle: diameter
                 square: side length
-        N: int
-            Pixel numbers of input light field in one
-            dimension.
-        w0: float
-            Size of the waist, unit: mm
-        z: float
-            The propagation distance of the gaussian beam
-            from the waist, unit: mm.
+        N : int
+            Pixel numbers of input light field in one dimension.
+        w0 : float
+            Size of the waist.
+        z : float
+            The propagation distance of the gaussian beam from the waist.
     """
     def __init__(self, wavelength, size, N, w0=0, z=0):
         """
         A spherical wave light field.
 
-        Args:
-            w0: float
-                Size of the waist, unit: mm
-            z: float
+        Parameters
+        ----------
+            w0 : float
+                Size of the waist.
+            z : float
                 The propagation distance of the gaussian beam
-                from the waist, unit: mm.
+                from the waist.
         """
         super().__init__(wavelength, size, N)
         if w0 == 0:
@@ -371,20 +390,21 @@ class Gaussian(Field):
                   φ(z) = arctan(z / zR)
                   zR = πω0^2 / λ
 
-        Args:
-            wavelength: float
-                Physical wavelength of input light, unit: µm.
-            size: float
-                Physical size of input light field, unit: mm.
+        Parameters
+        ----------
+            wavelength : float
+                Physical wavelength of input light.
+            size : float
+                Physical size of input light field.
                     circle: diameter
                     square: side length
-            N: int
+            N : int
                 Pixel numbers of input light field in one dimension.
-            w0: float
-                Size of the waist, unit: mm
-            z: float
+            w0 : float
+                Size of the waist.
+            z : float
                 The propagation distance of the gaussian beam
-                from the waist, unit: mm.
+                from the waist.
         """
         x = np.linspace(-size / 2, size / 2, N)
         X, Y = np.meshgrid(x, x)

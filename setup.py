@@ -19,7 +19,15 @@ setup(
     author='Miyoshichi',
     author_email='zhou.x.ae@m.titech.ac.jp',
     packages=['SimLight'],
-    install_requires=['numpy', 'matplotlib'],
+    install_requires=[
+        'numpy',
+        'matplotlib',
+        'julia',
+        'scipy',
+        'scikit-image',
+        'pillow',
+        'pyfftw'
+    ],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Operating System :: OS Independent',

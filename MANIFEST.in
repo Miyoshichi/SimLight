@@ -1,0 +1,3 @@
+include SimLight/3d_field_helper.jl
+include SimLight/zernike_coeff.m
+include SimLight/zernike_fun.m

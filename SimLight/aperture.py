@@ -14,11 +14,12 @@ def circle_aperture(field, radius=1):
     """
     Generate a circle aperture.
 
-    Args:
-        field: tuple
+    Parameters
+    ----------
+        field : SimLight.Field
             Input light field.
-        radius: float
-            Normalized radius of the circle. (optional)
+        radius : float, optional, default 1
+            Normalized radius of the circle.
     """
     field = sl.Field.copy(field)
 

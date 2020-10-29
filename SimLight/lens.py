@@ -14,10 +14,11 @@ class Lens:
     """
     A fundmental lens which is central symmetry.
 
-    Args:
-        D: float
-            Physical size (diameter) of the lens, unit: mm.
-        f: float
+    Parameters
+    ----------
+        D : float
+            Physical size (diameter) of the lens.
+        f : float
             Focal length of a lens.
     """
     counts = 0
@@ -27,11 +28,11 @@ class Lens:
         A fundmental lens which is central symmetry.
 
         Args:
-            D: float
-                Physical size (diameter) of lens, unit: mm.
-            f: float
+            D : float
+                Physical size (diameter) of lens.
+            f : float, optional, default float('inf')
                 Focal length of lens.
-            abbr: float
+            abbr : list, optional, default []
                 Zernike coefficients of the lens's aberration.
         """
         # check of inputted parameters
@@ -77,13 +78,16 @@ class Lens:
         """
         Calculate the F# of a lens.
 
-        Args:
-            D: float
-                Physical size (diameter) of lens, unit: mm.
-            f: float
+        Parameters
+        ----------
+            D : float
+                Physical size (diameter) of lens.
+            f : float
                 Focal length of lens.
-        Returns:
-            F: float
+
+        Returns
+        ----------
+            F : float
                 F# of a lens.
         """
         F = f / D
@@ -133,13 +137,14 @@ class CylindricalLens(Lens):
     """
     A cylindrical lens.
 
-    Args:
-        D: float
-            Physical size of the lens, unit: mm.
-        f: float
+    Parameters
+    ----------
+        D : float
+            Physical size of the lens.
+        f : float
             Focal length of a lens.
-        direction: int
-            Cylindrical direction. (optional, default is 0.)
+        direction : int, optional, default 0
+            Cylindrical direction.
             0: x direction
             1: y direction
     """
@@ -147,17 +152,18 @@ class CylindricalLens(Lens):
         """
         A cylindrical lens.
 
-        Args:
-            D: float
-                Physical size of the lens, unit: mm.
-            f: float
+        Parameters
+        ----------
+            D : float
+                Physical size of the lens.
+            f : float
                 Focal length of a lens.
             abbr: float
                 Zernike coefficients of the lens's aberration.
-            direction: int
-                Direction of curve. (optional, default is 0.)
-                0: x direction (horizontal)
-                1: y direction (vertical)
+            direction : int, optional, default 0
+                Cylindrical direction.
+                0: x direction
+                1: y direction
         """
         super().__init__(D, f, aber)
         self._lens_type = 'cylindrical lens'

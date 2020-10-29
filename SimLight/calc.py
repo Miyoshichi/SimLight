@@ -298,14 +298,14 @@ def delta_wavefront(field, sidel):
 
     Parameters
     ----------
-        field: SimLight.Field
+        field : SimLight.Field
             The light field of the lens with aberration.
-        sidel: SimLight.Sidel
+        sidel : SimLight.Sidel
             Sidel coefficients of the lens.
 
     Returns
     ----------
-        delta_W: array-like, float
+        delta_W : array-like, float
             Derivative of the aberrated wavefront.
     """
     field = sl.Field.copy(field)

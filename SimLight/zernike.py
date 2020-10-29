@@ -17,11 +17,12 @@ class ZernikeCoefficients:
     """
     Return a list of Zernike polynomials cofficients.
 
-    Args:
-        j: int
+    Parameters
+    ----------
+        j : int
             The terms of Zernike polynomials
-        coefficients: list
-            Predefined cofficients. (optional, default is void.)
+        coefficients : list, optional, default []
+            Predefined cofficients.
     """
     def __init__(self, j, coefficients=[]):
         """
@@ -114,9 +115,10 @@ class SidelCoefficients:
     """
     Return a list of Sidel Polynomials cofficients.
 
-    Args:
-        coefficients: list, [magnitude, angle]
-            Predefined cofficients. (optional, default is void.)
+    Parameters
+    ----------
+        coefficients: list in [magnitude, angle], optional, default []
+            Predefined cofficients.
     """
     def __init__(self, coefficients=[]):
         """

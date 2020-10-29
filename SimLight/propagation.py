@@ -5,6 +5,7 @@ Created on June 22, 2020
 @author: Zhou Xiang
 """
 
+import os
 import math
 import numpy as np
 import julia.Main as jl
@@ -68,7 +69,7 @@ def propagation(field, lens, z):
     return field
 
 
-@run_time_calc
+# @run_time_calc
 def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                            coord='cartesian', flag='py'):
     """
@@ -94,9 +95,9 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             'jl' for Julia.
     Returns
     ----------
-        field_out: SimLight.Field
+        field_out : SimLight.Field
             The light field after passing through a lens.
-        field_3d: list
+        field_3d : list
             The list of the 3D field.
     """
     # check of input parameters
@@ -105,7 +106,9 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     if flag is 'py':
         pass
     elif flag is 'jl':
-        jl.include('../SimLight/3d_field_helper.jl')
+        module_dir = os.path.dirname(sl.__file__)
+        os.chdir(module_dir)
+        jl.include('3d_field_helper.jl')
     else:
         raise ValueError('Unspported language.')
 
