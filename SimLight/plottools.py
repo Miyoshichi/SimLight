@@ -21,8 +21,11 @@ from .calc import phase, intensity, psf, delta_wavefront
 from .unwrap import simple_unwrap_1d
 from .units import *
 
+np.random.seed(235)
 
-def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
+
+def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
+                   title=''):
     """Plot the wavefront.
 
     Plot the wavefront of light field using matplotlib.
@@ -43,6 +46,8 @@ def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
             Title of the figure.
     """
     unwrap = True
+
+    field = sl.Field.copy(field)
 
     # check of input parameters
     if mask_r:
@@ -76,6 +81,9 @@ def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
     unit_ = units[unit]
 
     phase_ = wavelength * phase_ / (2 * np.pi) / µm
+    if noise is True:
+        noise_data = np.random.rand(N, N) * 1e-1
+        phase_ += noise_data
 
     fig = plt.figure()
 
@@ -92,6 +100,8 @@ def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
         RMS = 'RMS: ' + str(round(rms(phase_), 3)) + ' λ'
 
     if dimension == 2:
+        length = np.linspace(-size / 2, size / 2, phase_.shape[0])
+        X, Y = np.meshgrid(length, length)
         extent = [-size / 2, size / 2, -size / 2, size / 2]
         ax = fig.add_subplot(111)
         im = ax.imshow(phase_, cmap='rainbow', extent=extent,
@@ -101,6 +111,8 @@ def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
                                   fc='none', ec='none',)
             ax.add_patch(mask)
             im.set_clip_path(mask)
+            radius = np.sqrt(X**2 + Y**2)
+            phase_[radius > size * mask_r / 2] = 0
         xticklabels = ax.get_xticks() / unit_
         yticklabels = ax.get_yticks() / unit_
         ax.set_xticklabels(xticklabels.astype(int))
@@ -155,6 +167,8 @@ def plot_wavefront(field, mask_r=None, dimension=2, unit='mm', title=''):
 
     plt.show()
 
+    return phase_
+
 
 def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
                    unit='µm', title=''):
@@ -184,6 +198,8 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         title : str, optional, default ''
             Title of the figure.
     """
+    field = sl.Field.copy(field)
+
     # check of input parameters
     if mask_r:
         if mask_r > 1 or mask_r < 0:
@@ -265,6 +281,8 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         ax.set_title(title)
 
     plt.show()
+
+    return intensity_
 
 
 def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
@@ -557,6 +575,39 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
     plt.show()
 
 
+def plot_wavefront_diff(*fields, mask_r=1, dimension=2, unit='mm',
+                        title=''):
+    """
+    docstring
+    """
+    # input check
+    if len(fields) is not 2:
+        raise ValueError('Input light field number error.')
+
+    size = fields[-1].size
+    N = fields[-1].N
+    wavelength = fields[-1].wavelength
+
+    if isinstance(fields[0], sl.Field) is True:
+        for index, field in enumerate(fields):
+            phase_ = phase(field, unwrap=True)
+            name = 'wavefront' + str(index + 1)
+            globals()[name] = phase_
+        diff_wavefront = wavefront1 - wavefront2
+    else:
+        phase_ = phase(fields[-1], unwrap=True)
+        diff_wavefront = fields[0] / wavelength * (2 * np.pi) * µm - phase_
+
+    diff_field = sl.PlaneWave(wavelength, size, N)
+    diff_field.complex_amp *= np.exp(-1j * diff_wavefront)
+
+    plot_wavefront(diff_field,
+                   mask_r=mask_r,
+                   dimension=dimension,
+                   unit=unit,
+                   title=title)
+
+
 def plot_psf(field, aperture_type='circle', dimension=2, title=''):
     """Show the figure of point spread function (PSF).
 
@@ -766,8 +817,8 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
         min_value1 = np.nanmin(dm_points)
         max_value2 = np.max(dm_wavefront)
         min_value2 = np.min(dm_wavefront)
-        PV = 'P-V: ' + str(round(pv(dm_wavefront), 3)) + ' λ'
-        RMS = 'RMS: ' + str(round(rms(dm_wavefront), 3)) + ' λ'
+        PV = 'P-V: ' + str(round(pv(dm_wavefront), 3)) + ' µm'
+        RMS = 'RMS: ' + str(round(rms(dm_wavefront), 3)) + ' µm'
 
     extent = [-size / 2, size / 2, -size / 2, size / 2]
     im1 = ax1.imshow(dm_points, cmap='rainbow',

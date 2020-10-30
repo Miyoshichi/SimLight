@@ -15,6 +15,7 @@ import scipy.io
 
 import SimLight as sl
 from .unwrap import simple_unwrap
+from .units import *
 
 
 def phase(field, unwrap=False):
@@ -34,8 +35,12 @@ def phase(field, unwrap=False):
             The phase of the light field.
     """
     if isinstance(field, sl.Field) is True:
+        N = field.N
+        wavelength = field.wavelength
         phase = np.angle(field.complex_amp)
     elif isinstance(field, np.ndarray) is True:
+        N = field.shape[0]
+        wavelength = 1 * µm
         phase = np.angle(field)
     else:
         raise ValueError('Invalid light field.')
@@ -245,7 +250,7 @@ def sidel_aberration(field, sidel):
     return field
 
 
-def zernike_coeffs(field, j):
+def zernike_coeffs(field, j, **kwargs):
     """
     Return the Zernike coefficients of wavefront of a light field.
 
@@ -264,9 +269,13 @@ def zernike_coeffs(field, j):
     module_dir = os.path.dirname(sl.__file__)
     os.chdir(module_dir)
 
-    field = sl.Field.copy(field)
-    wavelength = field.wavelength
-    wavefront = phase(field, unwrap=True)
+    if isinstance(field, sl.Field) is True:
+        field = sl.Field.copy(field)
+        wavelength = field.wavelength
+        wavefront = phase(field, unwrap=True)
+    else:
+        wavelength = kwargs['wavelength']
+        wavefront = field / wavelength * (2 * np.pi) * µm
 
     # size = field.size
     # N = field.N
