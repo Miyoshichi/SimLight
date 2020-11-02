@@ -16,7 +16,7 @@ from numpy.lib.function_base import average
 import scipy.interpolate
 
 import SimLight as sl
-from .utils import pv, rms, circle_aperature
+from .utils import pv, rms, return_circle_aperature
 from .calc import phase, intensity, psf, delta_wavefront
 from .unwrap import simple_unwrap_1d
 from .units import *
@@ -25,7 +25,7 @@ np.random.seed(235)
 
 
 def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
-                   title=''):
+                   title='', return_data=False):
     """Plot the wavefront.
 
     Plot the wavefront of light field using matplotlib.
@@ -44,6 +44,13 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
             Unit used for FOV.
         title : str, optional
             Title of the figure.
+        return_data : bool, optional, default False
+            Return the wavefront data or not.
+
+    Returns
+    ----------
+        phase_ : numpy.ndarray
+            Wavefront data.
     """
     unwrap = True
 
@@ -61,11 +68,22 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         size = field.size
         N = field.N
         phase_ = phase(field, unwrap=unwrap)
+        lambdaflag = False
     elif isinstance(field, list) is True:
-        wavelength = field[0]
-        size = field[1]
-        N = field[2]
-        phase_ = phase(field[3], unwrap=unwrap)
+        if len(field) == 4:
+            wavelength = field[0]
+            size = field[1]
+            N = field[2]
+            phase_ = phase(field[3], unwrap=unwrap)
+            lambdaflag = False
+        elif len(field) == 5:
+            wavelength = field[0]
+            size = field[1]
+            N = field[2]
+            phase_ = field[3]
+            lambdaflag = True
+        else:
+            raise ValueError('Invalid light field.')
     else:
         raise ValueError('Invalid light field.')
 
@@ -80,7 +98,8 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
     }
     unit_ = units[unit]
 
-    phase_ = wavelength * phase_ / (2 * np.pi) / µm
+    if lambdaflag is False:
+        phase_ = wavelength * phase_ / (2 * np.pi) / µm
     if noise is True:
         noise_data = np.random.rand(N, N) * 1e-1
         phase_ += noise_data
@@ -88,7 +107,7 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
     fig = plt.figure()
 
     if mask_r:
-        _, _, norm_radius = circle_aperature(phase_, mask_r)
+        _, _, norm_radius = return_circle_aperature(phase_, mask_r)
         max_value = np.max(phase_[norm_radius <= mask_r])
         min_value = np.min(phase_[norm_radius <= mask_r])
         PV = 'P-V: ' + str(round(pv(phase_, mask=True), 3)) + ' λ'
@@ -113,10 +132,14 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
             im.set_clip_path(mask)
             radius = np.sqrt(X**2 + Y**2)
             phase_[radius > size * mask_r / 2] = 0
+        xticks = np.linspace(-size / 2, size / 2, 5)
+        yticks = np.linspace(-size / 2, size / 2, 5)
+        ax.set_xticks(xticks)
+        ax.set_yticks(yticks)
         xticklabels = ax.get_xticks() / unit_
         yticklabels = ax.get_yticks() / unit_
-        ax.set_xticklabels(xticklabels.astype(int))
-        ax.set_yticklabels(yticklabels.astype(int))
+        ax.set_xticklabels(xticklabels.astype(np.float16))
+        ax.set_yticklabels(yticklabels.astype(np.float16))
         ax.set_xlabel('Size [%s]' % unit)
         ax.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
                 transform=ax.transAxes)
@@ -135,10 +158,14 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         stride = math.ceil(N / 25)
         im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
                              cmap='rainbow', vmin=min_value, vmax=max_value)
+        xticks = np.linspace(-size / 2, size / 2, 5)
+        yticks = np.linspace(-size / 2, size / 2, 5)
+        ax.set_xticks(xticks)
+        ax.set_yticks(yticks)
         xticklabels = ax.get_xticks() / mm
         yticklabels = ax.get_yticks() / mm
-        ax.set_xticklabels(xticklabels.astype(int))
-        ax.set_yticklabels(yticklabels.astype(int))
+        ax.set_xticklabels(xticklabels.astype(np.float16))
+        ax.set_yticklabels(yticklabels.astype(np.float16))
         ax.set_xlabel('Size [%s]' % unit)
         ax.set_zlabel('Wavefront [λ]')
         ax.text2D(0.00, 0.95, PV, fontsize=12, horizontalalignment='left',
@@ -167,11 +194,12 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
 
     plt.show()
 
-    return phase_
+    if noise is True or return_data is True:
+        return phase_
 
 
 def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
-                   unit='µm', title=''):
+                   unit='µm', title='', return_data=False):
     """Plot the intensity.
 
     Plot the intensity of light field using matplotlib.
@@ -197,6 +225,13 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
             Unit used for FOV.
         title : str, optional, default ''
             Title of the figure.
+        return_data : bool, optional, default False
+            Return the intensity data or not.
+
+    Returns
+    ----------
+        intensity_ : numpy.ndarray
+            Intensity data.
     """
     field = sl.Field.copy(field)
 
@@ -282,7 +317,8 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 
     plt.show()
 
-    return intensity_
+    if return_data is True:
+        return intensity_
 
 
 def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
@@ -807,7 +843,7 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
         dm_points[r_dm > mask_r * np.sqrt(2) * (3 / 4) * (K / 2)] = np.nan
         max_value1 = np.nanmax(dm_points)
         min_value1 = np.nanmin(dm_points)
-        _, _, norm_radius = circle_aperature(dm_wavefront, mask_r)
+        _, _, norm_radius = return_circle_aperature(dm_wavefront, mask_r)
         max_value2 = np.max(dm_wavefront[norm_radius <= mask_r])
         min_value2 = np.min(dm_wavefront[norm_radius <= mask_r])
         PV = 'P-V: ' + str(round(pv(dm_wavefront, mask=True), 3)) + ' µm'

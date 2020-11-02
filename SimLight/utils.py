@@ -7,6 +7,7 @@ Created on May 22, 2020
 
 import math
 import time
+import scipy.io
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -96,7 +97,7 @@ def cart2pol(X, Y):
     return theta, R
 
 
-def circle_aperature(field, mask_r):
+def return_circle_aperature(field, mask_r):
     """Filter the circle aperature of a light field.
 
     Filter the circle aperature of a light field.
@@ -221,7 +222,7 @@ def longitudinal_to_wavefront(lens, longitude, wavelength=0.550*µm):
     field.complex_amp *= np.exp(-1j * varphi)
     phase_ = phase(field, unwrap=True)
     phase_ = wavelength * phase_ / (2 * np.pi)
-    _, _, norm_radius = circle_aperature(phase_, mask_r)
+    _, _, norm_radius = return_circle_aperature(phase_, mask_r)
     w_max_value = np.max(phase_[norm_radius <= mask_r])
     w_min_value = np.min(phase_[norm_radius <= mask_r])
     PV = 'P-V: ' + str(round(pv(phase_, mask=True), 3)) + ' λ'
@@ -239,7 +240,8 @@ def longitudinal_to_wavefront(lens, longitude, wavelength=0.550*µm):
     ax1.spines['right'].set_color('none')
     ax1.set_xlim((-l_max_value, l_max_value))
     ax1.set_xlabel('Longitudinal aberration [mm]')
-    ax1.set_ylabel('Size [mm]', rotation=0, position=(0, 1.01), labelpad=-20)
+    ax1.set_ylabel('Size [mm]', rotation=0, position=(0, 1.01),
+                   labelpad=-20)
 
     extent = [-D / 2, D / 2, -D / 2, D / 2]
     im2 = ax2.imshow(phase_, cmap='rainbow', extent=extent,
@@ -255,5 +257,34 @@ def longitudinal_to_wavefront(lens, longitude, wavelength=0.550*µm):
     plt.colorbar(im2, ax=ax2)
 
     plt.show()
+
+    return field
+
+
+def phase_mat2array(filename, key, wavelength, size):
+    """
+    Convert MATLAB phase data file to data can be processed by SimLight.
+
+    Parameters
+    ----------
+        filename : str
+            MATLAB data file.
+        key : str
+            MATLAB data key.
+        wavelength : float
+            Corresponding wavelength of MATLAB data.
+        size : float
+            Corresponding size of MATLAB data.
+
+    Returns
+    ----------
+        field : list
+            Phase data can be processed by SimLight.
+    """
+    matdata = scipy.io.loadmat(filename)
+    phase = matdata[key]
+    N = phase.shape[0]
+    fid = 'matlab'
+    field = [wavelength, size, N, phase, fid]
 
     return field

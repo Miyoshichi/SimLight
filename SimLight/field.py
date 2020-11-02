@@ -88,7 +88,7 @@ class Field:
         unit = unit
         title = title
         field = [self._wavelength, self._size, self._N, self._complex_amp]
-        _ = plot_wavefront(field, noise, mask_r, dimension, unit, title)
+        plot_wavefront(field, noise, mask_r, dimension, unit, title)
 
     def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, mag=1,
                        unit='µm', title=''):
@@ -126,8 +126,8 @@ class Field:
         unit = unit
         title = title
         field = [self._size, self._complex_amp]
-        _ = plot_intensity(field, mask_r, norm_type, dimension, mag, unit,
-                           title)
+        plot_intensity(field, mask_r, norm_type, dimension, mag, unit,
+                       title)
 
     def zernike_coeffs(self, j):
         """
