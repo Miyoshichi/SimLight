@@ -12,6 +12,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.axes_grid1 import make_axes_locatable, axes_size
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from numpy.lib.function_base import average
 import scipy.interpolate
 
@@ -104,8 +106,6 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         noise_data = np.random.rand(N, N) * 1e-1
         phase_ += noise_data
 
-    fig = plt.figure()
-
     if mask_r:
         _, _, norm_radius = return_circle_aperature(phase_, mask_r)
         max_value = np.max(phase_[norm_radius <= mask_r])
@@ -119,6 +119,7 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         RMS = 'RMS: ' + str(round(rms(phase_), 3)) + ' λ'
 
     if dimension == 2:
+        fig = plt.figure()
         length = np.linspace(-size / 2, size / 2, phase_.shape[0])
         X, Y = np.meshgrid(length, length)
         extent = [-size / 2, size / 2, -size / 2, size / 2]
@@ -146,18 +147,49 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         ax.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
                 transform=ax.transAxes)
         fig.colorbar(im)
+        if title:
+            fig.suptitle(title)
     elif dimension == 3:
-        ax = fig.add_subplot(111, projection='3d')
+        plt.rcParams.update({
+            'grid.linewidth': 0.5,
+            'grid.color': [0, 0, 0, 0.1],
+        })
         length = np.linspace(-size / 2, size / 2, phase_.shape[0])
         X, Y = np.meshgrid(length, length)
+        upper_value = max_value + (max_value - min_value) / 2
+        lower_value = min_value - (max_value - min_value) / 5
+        # stride = math.ceil(N / 25)
+        rccount = 100
         if mask_r:
             radius = np.sqrt(X**2 + Y**2)
             # X[radius > size * mask_r / 2] = np.nan
             # Y[radius > size * mask_r / 2] = np.nan
             phase_[radius > size * mask_r / 2] = np.nan
-        stride = math.ceil(N / 25)
-        im = ax.plot_surface(X, Y, phase_, rstride=stride, cstride=stride,
-                             cmap='rainbow', vmin=min_value, vmax=max_value)
+        fig = plt.figure(figsize=(8, 5))
+        ax = fig.add_subplot(111)
+        # aspect = 40
+        # pad_fraction = 0.5
+        # divider = make_axes_locatable(ax)
+        # width = axes_size.AxesY(ax, aspect=1. / aspect)
+        # pad = axes_size.Fraction(pad_fraction, width)
+        # cax = divider.append_axes('right', size=width, pad=pad)
+        caxins = inset_axes(ax,
+                            width='2.5%',
+                            height='85%',
+                            loc='right',
+                            bbox_to_anchor=(-0.075, -0.025, 1, 1),
+                            bbox_transform=ax.transAxes,
+                            borderpad=0)
+        ax = fig.add_subplot(111, projection='3d')
+        cset = ax.contourf(X, Y, phase_,
+                           zdir='z',
+                           offset=lower_value,
+                           cmap='rainbow', alpha=0.5)
+        im = ax.plot_surface(X, Y, phase_,
+                             rcount=rccount, ccount=rccount,
+                             cmap='rainbow', alpha=0.9,
+                             vmin=min_value, vmax=max_value)
+        ax.set_zlim(lower_value, upper_value)
         xticks = np.linspace(-size / 2, size / 2, 5)
         yticks = np.linspace(-size / 2, size / 2, 5)
         ax.set_xticks(xticks)
@@ -168,12 +200,23 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         ax.set_yticklabels(yticklabels.astype(np.float16))
         ax.set_xlabel('Size [%s]' % unit)
         ax.set_zlabel('Wavefront [λ]')
-        ax.text2D(0.00, 0.95, PV, fontsize=12, horizontalalignment='left',
+        ax.text2D(0.925, 0.75, PV,
+                  fontsize=12,
+                  horizontalalignment='right',
                   transform=ax.transAxes)
-        ax.text2D(0.00, 0.90, RMS, fontsize=12, horizontalalignment='left',
+        ax.text2D(0.925, 0.70, RMS,
+                  fontsize=12,
+                  horizontalalignment='right',
                   transform=ax.transAxes)
-        fig.colorbar(im)
+        fig.colorbar(im, cax=caxins)
+        if mask_r:
+            radius = np.sqrt(X**2 + Y**2)
+            phase_[radius > size * mask_r / 2] = 0
+        if title:
+            # ax.set_title(title)
+            fig.suptitle(title, x=0.575, y=0.9)
     else:
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         center = int(phase_.shape[0] / 2)
         if mask_r:
@@ -188,9 +231,8 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         ax.set_xticklabels(xticklabels.astype(int))
         ax.set_xlabel('Size [%s]' % unit)
         ax.set_ylabel('Phase [λ]')
-
-    if title:
-        ax.set_title(title)
+        if title:
+            fig.suptitle(title)
 
     plt.show()
 
@@ -313,7 +355,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         ax.set_ylabel('Intensity [a.u.]')
 
     if title:
-        ax.set_title(title)
+        fig.suptitle(title)
 
     plt.show()
 
@@ -389,7 +431,7 @@ def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
     ax.set_ylabel('Distance [µm]')
 
     if title:
-        ax.set_title(title)
+        fig.suptitle(title)
 
     plt.show()
 
@@ -479,7 +521,7 @@ def plot_two_intensities_diff(field1, field2,
     ax.set_ylabel('Intensity [a.u.]')
 
     if title:
-        ax.set_title(title)
+        fig.suptitle(title)
 
     plt.show()
 
@@ -606,7 +648,7 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
     if labels:
         ax.legend(labels)
     if title:
-        ax.set_title(title)
+        fig.suptitle(title)
 
     plt.show()
 
@@ -687,7 +729,7 @@ def plot_psf(field, aperture_type='circle', dimension=2, title=''):
         ax.set_ylabel('Intensity [a.u.]')
 
     if title:
-        ax.set_title(title)
+        fig.suptitle(title)
 
     plt.show()
 
@@ -745,7 +787,7 @@ def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
     ax.set_ylabel('Size [mm]', rotation=0, position=(0, 1.01), labelpad=-20)
 
     if title:
-        ax.set_title(title)
+        fig.suptitle(title)
 
     plt.show()
 
@@ -946,7 +988,7 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
                                                  linewidth=1)
 
     prop = abs(np.min(coeffs)) / (abs(np.min(coeffs)) + np.max(coeffs))
-    labelpad = 250 * prop + 10
+    labelpad = 250 * prop
 
     ax.spines['top'].set_color('none')
     ax.spines['right'].set_color('none')
@@ -955,6 +997,7 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
     ax.set_ylabel('Zernike coefficients (RMS)')
     ax.set_xticks(np.arange(len(xticks)))
     ax.set_xticklabels(xticks)
+    # ax.grid(True, axis='y', linewidth=0.5, alpha=0.2)
 
     def autolabel(ims):
         """
@@ -962,16 +1005,18 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
         """
         for im in ims:
             height = im.get_height()
-            if height != 0:
+            if abs(height - 0) > 1e-3:
+                xpos = im.get_x() + im.get_width() / 2
+                xy = (xpos, height) if height > 0 else (xpos, 0)
                 ax.annotate('{:.3f}'.format(height),
-                            xy=(im.get_x() + im.get_width() / 2, height),
-                            xytext=(0, 3) if height > 0 else (0, -3),
+                            xy=xy,
+                            xytext=(0, 3),
                             textcoords='offset points',
                             fontsize='small',
                             rotation=45,
                             rotation_mode='anchor',
-                            ha='left' if height > 0 else 'right',
-                            va='bottom' if height > 0 else 'top')
+                            ha='left',
+                            va='bottom')
 
     for i in range(len(coeffs)):
         autolabel(locals()['im' + str(i + 1)])
@@ -979,6 +1024,7 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
     if labels:
         ax.legend(labels)
     if title:
-        ax.set_title(title, pad=20)
+        # ax.set_title(title, pad=20)
+        fig.suptitle(title)
 
     plt.show()
