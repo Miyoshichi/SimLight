@@ -15,9 +15,13 @@ __pycache__/
 *test.*
 *dev.*
 
+# example files
+spherical_aberration*.ipynb
+
 # saved data files
 *.npy
 *.mat
+!Examples/data/*.mat
 
 # images
 *.jpeg

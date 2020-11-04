@@ -1,4 +1,4 @@
-function coeffs = zernike_coeff(wavefront, wavelength, n, m)
+function coeffs = zernike_coeff(wavefront, wavelength, n, m, nflag)
 %
 % Return the Zernike coefficients of wavefront of a light field.
 %
@@ -32,7 +32,7 @@ function coeffs = zernike_coeff(wavefront, wavelength, n, m)
     end
 
     is_in_circle = logical(is_in_circle);
-    Z = zernike_fun(n, m, R(is_in_circle), theta(is_in_circle), 'norm');
+    Z = zernike_fun(n, m, R(is_in_circle), theta(is_in_circle), nflag);
     coeffs = Z \ W(is_in_circle) / k;
 
 end

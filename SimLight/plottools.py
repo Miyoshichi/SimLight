@@ -19,7 +19,7 @@ import scipy.interpolate
 
 import SimLight as sl
 from .utils import pv, rms, return_circle_aperature
-from .calc import phase, intensity, psf, delta_wavefront
+from .calc import phase, intensity, psf, delta_wavefront, zernike_coeffs
 from .unwrap import simple_unwrap_1d
 from .units import *
 
@@ -792,7 +792,8 @@ def plot_longitudinal_aberration(lens, wavelength=0.550, title=''):
     plt.show()
 
 
-def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
+def plot_dm_wavefront(field, K, j=15, limits=[], mask_r=None, unit='mm',
+                      title='', **kwargs):
     """Plot deformable mirror concerned graphs.
 
     Plot the stroke of each actuators and the generated compensation
@@ -820,16 +821,39 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
         size = field.size
         N = field.N
         phase_ = phase(field, unwrap=unwrap)
+        surface = wavelength * phase_ / (2 * np.pi) / µm
     elif isinstance(field, list) is True:
         wavelength = field[0]
         size = field[1]
         N = field[2]
         phase_ = phase(field[3], unwrap=unwrap)
+        surface = wavelength * phase_ / (2 * np.pi) / µm
+    elif isinstance(field, np.ndarray) is True:
+        wavelength = kwargs['wavelength']
+        size = kwargs['size']
+        N = field.shape[0]
+        phase_ = field / wavelength * (2 * np.pi) * µm
+        surface = field
     else:
         raise ValueError('Invalid light field.')
 
-    # unit conversion
-    wavelength /= µm
+    if limits:
+        coeffs = zernike_coeffs(surface, j,
+                                nflag='pv',
+                                return_raw=True,
+                                wavelength=wavelength)
+        for index, limit in enumerate(limits):
+            if limit / wavelength < abs(coeffs[index]):
+                coeffs[index] = limit / wavelength
+        ltd_F = sl.PlaneWave(wavelength, size, N)
+        ltd_Z = sl.zernike.ZernikeCoefficients(j, coeffs)
+        ltd_F = sl.aberration(ltd_F, ltd_Z, nflag='pv')
+        ltd_phase = phase(ltd_F, unwrap=True)
+    else:
+        ltd_phase = phase_
+
+    # # unit conversion
+    # wavelength /= µm
 
     # unit
     units = {
@@ -842,7 +866,7 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
     }
     unit_ = units[unit]
 
-    phase_ = wavelength * phase_ / (2 * np.pi)
+    ltd_surface = wavelength * ltd_phase / (2 * np.pi) / µm
     x_dm = np.linspace((-K + 1) / 2, (K - 1) / 2, K)
     X_dm, Y_dm = np.meshgrid(x_dm, x_dm)
     r_dm = np.sqrt(X_dm**2 + Y_dm**2)
@@ -855,9 +879,9 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
     dm_points_Y = np.zeros((K, K))
     for i in range(K):
         for j in range(K):
-            ii = int(N / 8 * i + N / 16)
-            jj = int(N / 8 * j + N / 16)
-            dm_points[i][j] = phase_[ii][jj] / 2
+            ii = int(N / K * i + N / (2 * K))
+            jj = int(N / K * j + N / (2 * K))
+            dm_points[i][j] = ltd_surface[ii][jj] / 2
             dm_points_X[i][j] = X[ii][jj]
             dm_points_Y[i][j] = Y[ii][jj]
             if i == 0 or i == K - 1 or j == 0 or j == K - 1:
@@ -868,9 +892,10 @@ def plot_dm_wavefront(field, K, mask_r=None, unit='mm', title=''):
     dm_wavefront = scipy.interpolate.interp2d(dm_points_X, dm_points_Y,
                                               dm_points, kind='cubic')
     dm_wavefront = dm_wavefront(x, x)
+    print(pv(dm_wavefront, mask=True))
 
-    dm_points *= wavelength
-    dm_wavefront *= wavelength
+    dm_points *= wavelength / µm
+    dm_wavefront *= wavelength / µm
 
     # fig = plt.figure(figsize=(10, 4))
     # grid = plt.GridSpec(6, 11, wspace=0.5, hspace=0.5)

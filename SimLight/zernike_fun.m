@@ -130,7 +130,7 @@ function z = zernike_fun(n, m, r, theta, nflag)
     % Check normalization:
     % --------------------
     if nargin == 5 && ischar(nflag)
-        isnorm = strcmpi(nflag,'norm');
+        isnorm = strcmpi(nflag, {'pv', 'rms'});
         if ~isnorm
             error('zernfun:normalization','Unrecognized normalization flag')
         end
@@ -182,8 +182,9 @@ function z = zernike_fun(n, m, r, theta, nflag)
             z(:, j) = z(:, j) + p * rpowern(:, idx);
         end
         
-        if isnorm
-            % z(:, j) = z(:, j) *s qrt((1 + (m(j) ~= 0)) * (n(j) + 1) / pi);
+        if isnorm == [1, 0]
+            z(:, j) = z(:, j) / 2;
+        else
             z(:, j) = z(:, j) * sqrt((1 + (m(j) ~= 0)) * (n(j) + 1));
         end
     end

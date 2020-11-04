@@ -5,6 +5,7 @@ Created on May 22, 2020
 @author: Zhou Xiang
 """
 
+import copy
 import math
 import time
 import scipy.io
@@ -48,6 +49,8 @@ def pv(phase, mask=False):
         pv : float
             The PV value of input wavefront.
     """
+    phase = copy.deepcopy(phase)
+
     if mask is True:
         x = np.linspace(-1, 1, phase.shape[0])
         X, Y = np.meshgrid(x, x)
@@ -75,6 +78,8 @@ def rms(phase, mask=False):
         rms : float
             The RMS value of input wavefront.
     """
+    phase = copy.deepcopy(phase)
+
     size = phase.size
     if mask is True:
         x = np.linspace(-1, 1, phase.shape[0])

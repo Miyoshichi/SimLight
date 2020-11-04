@@ -150,7 +150,7 @@ class Field:
 
         Returns
         ----------
-            coppied_field : SimLight.Field
+            copied_field : SimLight.Field
                 A new copied light field.
         """
         return copy.deepcopy(field)
