@@ -65,6 +65,7 @@ def propagation(field, lens, z):
     if lens.f < 0:
         phi = -phi
     field.complex_amp *= (np.exp(1j * phi) / r)
+    field.complex_amp2 *= (np.exp(1j * phi) / r)
 
     return field
 
@@ -140,6 +141,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         complex_amp[L:R, L:R] = field.complex_amp[L_in:R_in, L_in:R_in]
 
     field.complex_amp = complex_amp
+    field.complex_amp2 = complex_amp
     field.size = size
     field.N = N
 
@@ -174,6 +176,8 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     # complex amplitude after passing through lens
     field.complex_amp *= np.exp(1j * phi)
     field.complex_amp[R >= field.size / 2] = 0
+    field.complex_amp2 *= np.exp(1j * phi)
+    field.complex_amp2[R >= field.size / 2] = 0
 
     # complex amplitude passing the distance z
     # cartesian coordinate method
@@ -218,6 +222,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         curvature = -1 / (z_ - f)
         new_field.size *= amp_scale
         new_field.complex_amp /= amp_scale
+        new_field.complex_amp2 /= amp_scale
         new_field.curvature = curvature
 
         if curvature != 0:
@@ -231,6 +236,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             R = X**2 + Y**2
             phi = R * k / (2 * f_)
             new_field.complex_amp *= np.exp(1j * phi)
+            new_field.complex_amp2 = new_field.complex_amp 
             new_field.curvature = 0
 
         return new_field
@@ -299,6 +305,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                                                       lower,
                                                       upper)
             field_.complex_amp = np.asarray(new_complex_amp)
+            field_.complex_amp2 = field_.complex_amp
             field_.size = max_size
             field_.N = lower + upper
 
@@ -370,6 +377,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                 resized_imag = np.asarray(
                     jl.resize_to_same_size(complex_amp_imag, median_N))
             field_.complex_amp = (resized_real + resized_imag * 1j)
+            field_.complex_amp2 = field_.complex_amp
             field_.N = median_N
 
         return out_field, field_3d

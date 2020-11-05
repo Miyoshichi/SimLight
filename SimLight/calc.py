@@ -18,7 +18,7 @@ from .unwrap import simple_unwrap
 from .units import *
 
 
-def phase(field, unwrap=False):
+def phase(field, unwrap=False, **kwargs):
     """
     Calculate the phase of a light field.
 
@@ -36,17 +36,21 @@ def phase(field, unwrap=False):
     """
     if isinstance(field, sl.Field) is True:
         N = field.N
-        wavelength = field.wavelength
-        phase = np.angle(field.complex_amp)
+        phase_ratio = field.phase_ratio
+        # wavelength = field.wavelength
+        phase = np.angle(field.complex_amp2)
     elif isinstance(field, np.ndarray) is True:
         N = field.shape[0]
-        wavelength = 1 * µm
+        phase_ratio = kwargs['phase_ratio']
+        # wavelength = 1 * µm
         phase = np.angle(field)
     else:
         raise ValueError('Invalid light field.')
 
     if unwrap is True:
         phase = simple_unwrap(phase)
+
+    phase *= phase_ratio
 
     return phase
 
@@ -169,6 +173,9 @@ def aberration(field, zernike, nflag='rms'):
     j = zernike.j
     coeff = zernike.coefficients
 
+    phase_ratio = np.max(coeff) / 0.1
+    coeff /= phase_ratio
+
     # x = np.linspace(-size, size, N)
     # x = np.linspace(-size / 25.4, size / 25.4, N)
     x = np.linspace(-1, 1, N)
@@ -206,8 +213,11 @@ def aberration(field, zernike, nflag='rms'):
         else:
             raise ValueError('Unspported normalization method.')
 
-    varphi = -k * phi
+    varphi = -k * phi * phase_ratio
+    varphi2 = -k * phi
     field.complex_amp *= np.exp(1j * varphi)
+    field.complex_amp2 *= np.exp(1j * varphi2)
+    field.phase_ratio = phase_ratio
 
     return field
 
@@ -251,6 +261,7 @@ def sidel_aberration(field, sidel):
 
     varphi = k * surface
     field.complex_amp *= np.exp(-1j * varphi)
+    field.complex_amp2 *= np.exp(-1j * varphi)
 
     return field
 
@@ -382,12 +393,14 @@ def deformable_mirror(field, K, j=15, limits=[], **kwargs):
         wavelength = field.wavelength
         size = field.size
         N = field.N
+        phase_ratio = field.phase_ratio
         phase_ = phase(field, unwrap=True)
         surface = wavelength * phase_ / (2 * np.pi) / µm
     else:
         wavelength = kwargs['wavelength']
         size = kwargs['size']
         N = field.shape[0]
+        phase_ratio = 100  # temp
         phase_ = field / wavelength * (2 * np.pi) * µm
         surface = field
 
@@ -397,7 +410,7 @@ def deformable_mirror(field, K, j=15, limits=[], **kwargs):
                                 return_raw=True,
                                 wavelength=wavelength)
         for index, limit in enumerate(limits):
-            if limit / wavelength < abs(coeffs[index]):
+            if 2 * limit / wavelength < abs(coeffs[index]):
                 coeffs[index] = limit / wavelength
         ltd_F = sl.PlaneWave(wavelength, size, N)
         ltd_Z = sl.zernike.ZernikeCoefficients(j, coeffs)
@@ -429,6 +442,9 @@ def deformable_mirror(field, K, j=15, limits=[], **kwargs):
     dm_phase = dm_phase(x, x) * 2
 
     res_phase = phase_ - dm_phase
+    res_phase_ = res_phase / phase_ratio
     dm_field.complex_amp *= np.exp(-1j * res_phase)
+    dm_field.complex_amp2 *= np.exp(-1j * res_phase_)
+    dm_field.phase_ratio = phase_ratio
 
     return dm_field

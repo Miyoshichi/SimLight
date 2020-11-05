@@ -56,9 +56,13 @@ class Field:
         self._size = size
         self._N = N
         self._curvature = 0
+        self._phase_ratio = 1
         self._complex_amp = np.ones([N, N], dtype=np.complex)
+        self._complex_amp2 = np.ones([N, N], dtype=np.complex)
 
     def zernike_aberration(self):
+        """TODO
+        """
         pass
 
     def plot_wavefront(self, noise=False, mask_r=None, dimension=2,
@@ -87,7 +91,13 @@ class Field:
         dimension = dimension
         unit = unit
         title = title
-        field = [self._wavelength, self._size, self._N, self._complex_amp]
+        fid = 'SimLight'
+        field = [self._wavelength,
+                 self._size,
+                 self._N,
+                 self._complex_amp2,
+                 self._phase_ratio,
+                 fid]
         plot_wavefront(field, noise, mask_r, dimension, unit, title)
 
     def plot_intensity(self, mask_r=None, norm_type=0, dimension=2, mag=1,
@@ -184,12 +194,28 @@ class Field:
         self._curvature = curvature
 
     @property
+    def phase_ratio(self):
+        return self._phase_ratio
+
+    @phase_ratio.setter
+    def phase_ratio(self, phase_ratio):
+        self._phase_ratio = phase_ratio
+
+    @property
     def complex_amp(self):
         return self._complex_amp
 
     @complex_amp.setter
     def complex_amp(self, complex_amp):
         self._complex_amp = complex_amp
+
+    @property
+    def complex_amp2(self):
+        return self._complex_amp2
+
+    @complex_amp2.setter
+    def complex_amp2(self, complex_amp2):
+        self._complex_amp2 = complex_amp2
 
 
 class PlaneWave(Field):

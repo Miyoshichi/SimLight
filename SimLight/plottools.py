@@ -72,11 +72,14 @@ def plot_wavefront(field, noise=False, mask_r=None, dimension=2, unit='mm',
         phase_ = phase(field, unwrap=unwrap)
         lambdaflag = False
     elif isinstance(field, list) is True:
-        if len(field) == 4:
+        if len(field) == 6:
             wavelength = field[0]
             size = field[1]
             N = field[2]
-            phase_ = phase(field[3], unwrap=unwrap)
+            phase_ratio = field[4]
+            phase_ = phase(field[3],
+                           unwrap=unwrap,
+                           phase_ratio=phase_ratio)
             lambdaflag = False
         elif len(field) == 5:
             wavelength = field[0]
@@ -843,7 +846,7 @@ def plot_dm_wavefront(field, K, j=15, limits=[], mask_r=None, unit='mm',
                                 return_raw=True,
                                 wavelength=wavelength)
         for index, limit in enumerate(limits):
-            if limit / wavelength < abs(coeffs[index]):
+            if 2 * limit / wavelength < abs(coeffs[index]):
                 coeffs[index] = limit / wavelength
         ltd_F = sl.PlaneWave(wavelength, size, N)
         ltd_Z = sl.zernike.ZernikeCoefficients(j, coeffs)
@@ -892,7 +895,6 @@ def plot_dm_wavefront(field, K, j=15, limits=[], mask_r=None, unit='mm',
     dm_wavefront = scipy.interpolate.interp2d(dm_points_X, dm_points_Y,
                                               dm_points, kind='cubic')
     dm_wavefront = dm_wavefront(x, x)
-    print(pv(dm_wavefront, mask=True))
 
     dm_points *= wavelength / µm
     dm_wavefront *= wavelength / µm
@@ -952,14 +954,22 @@ def plot_dm_wavefront(field, K, j=15, limits=[], mask_r=None, unit='mm',
     im2 = ax2.imshow(dm_wavefront, extent=extent, cmap='rainbow',
                      vmin=min_value2, vmax=max_value2)
     fig2.colorbar(im2)
+    xticks = np.linspace(-size / 2, size / 2, 5)
+    yticks = np.linspace(-size / 2, size / 2, 5)
+    ax2.set_xticks(xticks)
+    ax2.set_yticks(yticks)
     xticklabels = ax2.get_xticks() / mm
     yticklabels = ax2.get_yticks() / mm
-    ax2.set_xticklabels(xticklabels.astype(int))
-    ax2.set_yticklabels(yticklabels.astype(int))
+    ax2.set_xticklabels(xticklabels.astype(np.float16))
+    ax2.set_yticklabels(yticklabels.astype(np.float16))
     ax2.set_xlabel('Size [%s]' % unit)
-    ax2.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
+    ax2.text(0.05, 0.95, PV,
+             fontsize=12,
+             horizontalalignment='left',
              transform=ax2.transAxes)
-    ax2.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
+    ax2.text(0.05, 0.90, RMS,
+             fontsize=12,
+             horizontalalignment='left',
              transform=ax2.transAxes)
     if mask_r:
         mask = patches.Circle([0, 0], size * mask_r / 2,
