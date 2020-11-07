@@ -14,6 +14,7 @@ import scipy.interpolate
 import scipy.io
 
 import SimLight as sl
+import SimLight.plottools as slpl
 from .unwrap import simple_unwrap
 from .units import *
 
@@ -289,9 +290,14 @@ def zernike_coeffs(field, j, nflag='rms', return_raw=False, **kwargs):
         field = sl.Field.copy(field)
         wavelength = field.wavelength
         wavefront = phase(field, unwrap=True)
-    else:
+    elif isinstance(field, list) is True:
+        wavelength = kwargs['wavelength']
+        wavefront = field[3] / wavelength * (2 * np.pi) * µm
+    elif isinstance(field, np.ndarray) is True:
         wavelength = kwargs['wavelength']
         wavefront = field / wavelength * (2 * np.pi) * µm
+    else:
+        raise ValueError('Invalid light field.')
 
     # size = field.size
     # N = field.N
@@ -411,7 +417,7 @@ def deformable_mirror(field, K, j=15, limits=[], **kwargs):
                                 wavelength=wavelength)
         for index, limit in enumerate(limits):
             if 2 * limit / wavelength < abs(coeffs[index]):
-                coeffs[index] = limit / wavelength
+                coeffs[index] = 2 * limit / wavelength
         ltd_F = sl.PlaneWave(wavelength, size, N)
         ltd_Z = sl.zernike.ZernikeCoefficients(j, coeffs)
         ltd_F = sl.aberration(ltd_F, ltd_Z, nflag='pv')

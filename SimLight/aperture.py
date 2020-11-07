@@ -27,5 +27,6 @@ def circle_aperture(field, radius=1):
     X, Y = np.meshgrid(x, x)
     R = np.sqrt(X**2 + Y**2)
     field.complex_amp[R > radius * field.size / 2] = 0
+    field.complex_amp2[R > radius * field.size / 2] = 0
 
     return field

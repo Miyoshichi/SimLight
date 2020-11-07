@@ -27,7 +27,7 @@ spherical_aberration*.ipynb
 *.jpeg
 *.jpg
 *.pdf
-*png
+*.png
 
 # dist files
 *.whl

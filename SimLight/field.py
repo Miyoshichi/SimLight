@@ -252,8 +252,14 @@ class PlaneWave(Field):
         self._x_tilt = x_tilt
         self._y_tilt = y_tilt
         self._field_type = 'plane wave'
-        self._complex_amp *= self.__tilt(self._wavelength, self._size, self._N,
+        self._complex_amp *= self.__tilt(self._wavelength,
+                                         self._size,
+                                         self._N,
                                          [self._x_tilt, self._y_tilt])
+        self._complex_amp2 *= self.__tilt(self._wavelength,
+                                          self._size,
+                                          self._N,
+                                          [self._x_tilt, self._y_tilt])
 
     @staticmethod
     def __tilt(wavelength, size, N, tilt):
@@ -327,6 +333,8 @@ class SphericalWave(Field):
         self._field_type = 'spherical wave'
         self._complex_amp *= self.__sphere(self._wavelength, self._size,
                                            self._N, self._z)
+        self._complex_amp2 *= self.__sphere(self._wavelength, self._size,
+                                            self._N, self._z)
 
     @staticmethod
     def __sphere(wavelength, size, N, z):
