@@ -652,7 +652,9 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
     for index, intensity_ in enumerate(intensities):
         center = int(intensity_.shape[0] / 2)
         X = np.linspace(-max_size / 2, max_size / 2, intensity_.shape[0])
-        ax.plot(X, intensity_[center + shift_[index]], color=colors[index])
+        ax.plot(X, intensity_[center + shift_[index]],
+                color=colors[index],
+                linewidth=3)
     ax.grid(True)
     xticklabels = ax.get_xticks() / unit_
     ax.set_xticklabels(xticklabels.astype(int))
