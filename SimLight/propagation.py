@@ -176,8 +176,11 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     # complex amplitude after passing through lens
     field.complex_amp *= np.exp(1j * phi)
     field.complex_amp[R >= field.size / 2] = 0
-    field.complex_amp2 *= np.exp(1j * phi)
-    field.complex_amp2[R >= field.size / 2] = 0
+    # leads to intensity calculation error
+    # field.complex_amp2 *= np.exp(1j * phi)
+    # field.complex_amp2[R >= field.size / 2] = 0
+    # TODO temp method
+    field.complex_amp2 = field.complex_amp
 
     # complex amplitude passing the distance z
     # cartesian coordinate method
@@ -190,7 +193,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     # spherical coordinate method
     def spherical_coordinate(z_):
         large_number = 1e7 * m
-        tiny_number = 1000 * nm
+        tiny_number = 100 * nm
         f = lens.f
         # size = field.size
         wavelength = field.wavelength
@@ -236,7 +239,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             R = X**2 + Y**2
             phi = R * k / (2 * f_)
             new_field.complex_amp *= np.exp(1j * phi)
-            new_field.complex_amp2 = new_field.complex_amp 
+            new_field.complex_amp2 = new_field.complex_amp
             new_field.curvature = 0
 
         return new_field

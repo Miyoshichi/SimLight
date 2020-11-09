@@ -135,7 +135,7 @@ class Field:
         mag = mag
         unit = unit
         title = title
-        field = [self._size, self._complex_amp]
+        field = [self._size, self._N, self._complex_amp]
         plot_intensity(field, mask_r, norm_type, dimension, mag, unit,
                        title)
 
@@ -414,6 +414,8 @@ class Gaussian(Field):
         self._field_type = 'gaussian beam'
         self._complex_amp *= self.__gaussian(self._wavelength, self._size,
                                              self._N, self._w0, self._z)
+        self._complex_amp2 *= self.__gaussian(self._wavelength, self._size,
+                                              self._N, self._w0, self._z)
 
     @staticmethod
     def __gaussian(wavelength, size, N, w0, z):

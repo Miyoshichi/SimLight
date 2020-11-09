@@ -14,6 +14,8 @@ import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.axes_grid1 import make_axes_locatable, axes_size
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+from matplotlib_scalebar.scalebar import ScaleBar
 from numpy.lib.function_base import average
 import scipy.interpolate
 
@@ -302,7 +304,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         intensity_ = intensity(field, norm_type=norm_type)
     elif isinstance(field, list) is True:
         size = field[0]
-        intensity_ = intensity(field[1], norm_type=norm_type)
+        intensity_ = intensity(field[2], norm_type=norm_type)
     else:
         raise ValueError('Invalid light field.')
 
@@ -337,6 +339,17 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
     if dimension == 2:
         extent = [-size / 2, size / 2, -size / 2, size / 2]
         im = ax.imshow(intensity_, cmap='gist_gray', extent=extent, vmin=0)
+        # scalebar = AnchoredSizeBar(ax.transData,
+        #                            N / 5 * µm,
+        #                            'test',
+        #                            'lower left')
+        scalebar = ScaleBar(size / intensity_.shape[0], 'um',
+                            height_fraction=0.02,
+                            location='lower left',
+                            scale_loc='top',
+                            frameon=False,
+                            color='white')
+        ax.add_artist(scalebar)
         if mask_r:
             mask = patches.Circle([0, 0], mask_r, fc='none', ec='none')
             ax.add_patch(mask)
