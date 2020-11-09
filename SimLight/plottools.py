@@ -676,7 +676,7 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
         ax.plot(X, intensity_[center + shift_[index]],
                 color=colors[index],
                 linewidth=3)
-    ax.grid(True)
+    ax.grid(True, axis='y')
     xticklabels = ax.get_xticks() / unit_
     ax.set_xticklabels(xticklabels.astype(int))
     ax.set_xlabel('Size [%s]' % unit)
