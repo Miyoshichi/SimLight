@@ -343,8 +343,9 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         #                            N / 5 * µm,
         #                            'test',
         #                            'lower left')
-        scalebar = ScaleBar(size / intensity_.shape[0], 'um',
+        scalebar = ScaleBar(1.0, 'm', 'si-length',
                             height_fraction=0.02,
+                            length_fraction=0.25,
                             location='lower left',
                             scale_loc='top',
                             frameon=False,
@@ -354,30 +355,37 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
             mask = patches.Circle([0, 0], mask_r, fc='none', ec='none')
             ax.add_patch(mask)
             im.set_clip_path(mask)
-        xticks = np.linspace(-size / 2, size / 2, 5)
-        yticks = np.linspace(-size / 2, size / 2, 5)
-        ax.set_xticks(xticks)
-        ax.set_yticks(yticks)
-        xticklabels = ax.get_xticks() / unit_
-        yticklabels = ax.get_yticks() / unit_
-        ax.set_xticklabels(xticklabels.astype(np.float16))
-        ax.set_yticklabels(yticklabels.astype(np.float16))
-        ax.set_xlabel('Size [%s]' % unit)
+        # xticks = np.linspace(-size / 2, size / 2, 5)
+        # yticks = np.linspace(-size / 2, size / 2, 5)
+        # ax.set_xticks(xticks)
+        # ax.set_yticks(yticks)
+        # xticklabels = ax.get_xticks() / unit_
+        # yticklabels = ax.get_yticks() / unit_
+        # ax.set_xticklabels(xticklabels.astype(np.float16))
+        # ax.set_yticklabels(yticklabels.astype(np.float16))
+        # ax.set_xlabel('Size [%s]' % unit)
+        ax.set_yticks([])
+        ax.set_xticks([])
         fig.colorbar(im)
     else:
         # fig.set_size_inches(6, 2)
         center = int(intensity_.shape[0] / 2)
+        # cmap = plt.get_cmap('Accent')
+        # color = cmap(np.asarray([2]))[0]
+        color = 'k'
         if mask_r:
             length = int((intensity_.shape[0] * mask_r) / 2) * 2
             X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
             [left, right] = [center - length / 2, center + length / 2]
-            im = ax.plot(X, intensity_[center][int(left):int(right)])
+            im = ax.plot(X, intensity_[center][int(left):int(right)],
+                         linewidth=3,
+                         color=color)
         else:
             X = np.linspace(-size / 2, size / 2, intensity_.shape[0])
             im = ax.plot(X, intensity_[center])
         xticklabels = ax.get_xticks() / unit_
         ax.set_xticklabels(xticklabels.astype(int))
-        ax.grid(True)
+        ax.grid(True, axis='y')
         ax.set_xlabel('Size [%s]' % unit)
         ax.set_ylabel('Intensity [a.u.]')
 
@@ -543,7 +551,7 @@ def plot_two_intensities_diff(field1, field2,
     im1 = ax.plot(X, intensity1[center], label=label1)
     im2 = ax.plot(X, intensity2[center], label=label2)
     ax.legend()
-    ax.grid(True)
+    ax.grid(True, axis='y')
     ax.set_xlabel('Size [mm]')
     ax.set_ylabel('Intensity [a.u.]')
 
