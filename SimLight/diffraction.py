@@ -102,7 +102,7 @@ def fresnel(field, z):
     Ftemp *= 0.25 * comp
     Ftemp *= iiijN
     field.complex_amp = Ftemp
-    field.complex_amp2 = Ftemp
+    field.complex_amp2 = field.complex_amp
 
     return field
 

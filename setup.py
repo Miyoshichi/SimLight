@@ -22,11 +22,12 @@ setup(
     install_requires=[
         'numpy',
         'matplotlib',
+        'matplotlib_scalebar',
         'julia',
         'scipy',
         'scikit-image',
         'pillow',
-        'pyfftw'
+        'pyfftw',
     ],
     include_package_data=True,
     classifiers=[

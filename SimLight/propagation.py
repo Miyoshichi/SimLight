@@ -101,13 +101,15 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         field_3d : list
             The list of the 3D field.
     """
+    curr_dir = os.getcwd()
+
     # check of input parameters
     if z < 0:
         raise ValueError('The propagation distance cannot be negative.')
     if flag is 'py':
         pass
     elif flag is 'jl':
-        module_dir = os.path.dirname(sl.__file__)
+        module_dir = os.path.dirname(sl.__file__) + '/misc'
         os.chdir(module_dir)
         jl.include('3d_field_helper.jl')
     else:
@@ -141,7 +143,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         complex_amp[L:R, L:R] = field.complex_amp[L_in:R_in, L_in:R_in]
 
     field.complex_amp = complex_amp
-    field.complex_amp2 = complex_amp
+    # field.complex_amp2 = complex_amp
     field.size = size
     field.N = N
 
@@ -175,12 +177,12 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
 
     # complex amplitude after passing through lens
     field.complex_amp *= np.exp(1j * phi)
-    field.complex_amp[R >= field.size / 2] = 0
+    field.complex_amp[R > field.size / 2] = 0
     # leads to intensity calculation error
     # field.complex_amp2 *= np.exp(1j * phi)
     # field.complex_amp2[R >= field.size / 2] = 0
-    # TODO temp method
-    field.complex_amp2 = field.complex_amp
+    # temp method
+    # field.complex_amp2 = field.complex_amp
 
     # complex amplitude passing the distance z
     # cartesian coordinate method
@@ -225,7 +227,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         curvature = -1 / (z_ - f)
         new_field.size *= amp_scale
         new_field.complex_amp /= amp_scale
-        new_field.complex_amp2 /= amp_scale
+        # new_field.complex_amp2 /= amp_scale
         new_field.curvature = curvature
 
         if curvature != 0:
@@ -308,7 +310,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                                                       lower,
                                                       upper)
             field_.complex_amp = np.asarray(new_complex_amp)
-            field_.complex_amp2 = field_.complex_amp
+            # field_.complex_amp2 = field_.complex_amp
             field_.size = max_size
             field_.N = lower + upper
 
@@ -382,6 +384,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             field_.complex_amp = (resized_real + resized_imag * 1j)
             field_.complex_amp2 = field_.complex_amp
             field_.N = median_N
+            os.chdir(curr_dir)
 
         return out_field, field_3d
     else:

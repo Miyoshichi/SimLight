@@ -283,7 +283,8 @@ def zernike_coeffs(field, j, nflag='rms', return_raw=False, **kwargs):
         coeffs : array-like, float
             Zernike coefficients.
     """
-    module_dir = os.path.dirname(sl.__file__)
+    curr_dir = os.getcwd()
+    module_dir = os.path.dirname(sl.__file__) + '/zernike'
     os.chdir(module_dir)
 
     if isinstance(field, sl.Field) is True:
@@ -321,6 +322,8 @@ def zernike_coeffs(field, j, nflag='rms', return_raw=False, **kwargs):
 
     if return_raw is False:
         coeffs = np.round_(coeffs, decimals=4)
+
+    os.chdir(curr_dir)
 
     return coeffs
 
