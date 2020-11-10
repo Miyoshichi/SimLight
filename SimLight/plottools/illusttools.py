@@ -475,7 +475,10 @@ def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
     ax.set_xticks([])
 
     if title:
-        fig.suptitle(title)
+        fig.suptitle(title, x=0, y=0.5,
+                     rotation='vertical',
+                     verticalalignment='center',
+                     horizontalalignment='left')
 
     plt.show()
 

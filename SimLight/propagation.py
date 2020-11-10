@@ -72,7 +72,7 @@ def propagation(field, lens, z):
 
 # @run_time_calc
 def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
-                           coord='cartesian', flag='py'):
+                           coord='cartesian', lflag='py'):
     """
     Calculate the light field after passing through a lens.
 
@@ -106,9 +106,9 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     # check of input parameters
     if z < 0:
         raise ValueError('The propagation distance cannot be negative.')
-    if flag is 'py':
+    if lflag is 'py':
         pass
-    elif flag is 'jl':
+    elif lflag is 'jl':
         module_dir = os.path.dirname(sl.__file__) + '/misc'
         os.chdir(module_dir)
         jl.include('3d_field_helper.jl')
@@ -294,7 +294,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                     field_.N,
                     lower + upper)),
                   end='')
-            if flag is 'py':
+            if lflag is 'py':
                 new_complex_amp = np.zeros([lower + upper, lower + upper],
                                            dtype=np.complex)
                 # if lower + upper >= field_.N:
@@ -333,7 +333,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             complex_amp_real = np.real(field_.complex_amp)
             complex_amp_imag = np.imag(field_.complex_amp)
             # TODO more effective resize alogrithm
-            if flag is 'py':
+            if lflag is 'py':
                 # # interpolating method
                 # # before interpolating
                 # x = np.linspace(-field_.size / 2,
