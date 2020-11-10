@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.colors as mcolors
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.axes_grid1 import make_axes_locatable, axes_size
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -372,19 +373,80 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         # cmap = plt.get_cmap('Accent')
         # color = cmap(np.asarray([2]))[0]
         color = 'cornflowerblue'
+
+        def gradient_fill(ax, x, y, **kwargs):
+            """
+            Plot a line with a linear alpha gradient filled beneath it.
+
+            Parameters
+            ----------
+            ax : a matplotlib Axes instance
+                The axes to plot on. If None, the current pyplot axes
+                will be used.
+            x, y : array-like
+                The data values of the line.
+            Additional arguments are passed on to matplotlib's ``plot``
+            function.
+
+            Returns
+            ----------
+            line : a Line2D instance
+                The line plotted.
+            im : an AxesImage instance
+                The transparent gradient clipped to just the area beneath
+                the curve.
+            """
+            line, = ax.plot(x, y, **kwargs)
+
+            zorder = line.get_zorder()
+            fill_color = line.get_color()
+            line_alpha = line.get_alpha()
+            alpha = 0.3 if line_alpha is None else 0.3 * line_alpha
+
+            z = np.empty((100, 1, 4), dtype=float)
+            rgb = mcolors.colorConverter.to_rgb(fill_color)
+            z[:, :, :3] = rgb
+            z[:, :, -1] = np.linspace(0, alpha, 100)[:, None]
+
+            xmin, xmax, ymin, ymax = x.min(), x.max(), y.min(), y.max()
+            extent = [xmin, xmax, -0.05 * ymax, 1.05 * ymax]
+            im = ax.imshow(z, extent=extent,
+                           aspect='auto', origin='lower', zorder=zorder)
+
+            xy = np.column_stack([x, y])
+            xy = np.vstack([[xmin, ymin], xy, [xmax, ymin], [xmin, ymin]])
+            clip_path = patches.Polygon(xy,
+                                        facecolor='none',
+                                        edgecolor='none',
+                                        closed=True)
+
+            ax.add_patch(clip_path)
+            im.set_clip_path(clip_path)
+
+            ax.autoscale(True)
+
+            return line, im
+
         if mask_r:
             length = int((intensity_.shape[0] * mask_r) / 2) * 2
             X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
             [left, right] = [center - length / 2, center + length / 2]
-            im = ax.plot(X, intensity_[center][int(left):int(right)],
-                         linewidth=3,
-                         color=color)
+            # line = ax.plot(X, intensity_[center][int(left):int(right)],
+            #                linewidth=3,
+            #                color=color)
+            # shadow = ax.fill(X, intensity_[center][int(left):int(right)])
+            gradient_fill(ax, X, intensity_[center][int(left):int(right)],
+                          linewidth=3,
+                          color=color)
         else:
             X = np.linspace(-size / 2, size / 2, intensity_.shape[0])
-            im = ax.plot(X, intensity_[center])
+            # line = ax.plot(X, intensity_[center])
+            gradient_fill(ax, X, intensity_[center],
+                          linewidth=3,
+                          color=color)
         xticklabels = ax.get_xticks() / unit_
         ax.set_xticklabels(xticklabels.astype(int))
-        ax.grid(True, axis='y')
+        ax.grid(True, axis='y', linewidth=0.5, alpha=0.5)
         ax.set_xlabel('Size [%s]' % unit)
         ax.set_ylabel('Intensity [a.u.]')
 
@@ -585,6 +647,58 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
     }
     unit_ = units[unit]
 
+    def gradient_fill(ax, x, y, **kwargs):
+        """
+        Plot a line with a linear alpha gradient filled beneath it.
+
+        Parameters
+        ----------
+        ax : a matplotlib Axes instance
+            The axes to plot on. If None, the current pyplot axes
+            will be used.
+        x, y : array-like
+            The data values of the line.
+        Additional arguments are passed on to matplotlib's ``plot`` function.
+
+        Returns
+        ----------
+        line : a Line2D instance
+            The line plotted.
+        im : an AxesImage instance
+            The transparent gradient clipped to just the area beneath
+            the curve.
+        """
+        line, = ax.plot(x, y, **kwargs)
+
+        zorder = line.get_zorder()
+        fill_color = line.get_color()
+        line_alpha = line.get_alpha()
+        alpha = 0.3 if line_alpha is None else 0.3 * line_alpha
+
+        z = np.empty((100, 1, 4), dtype=float)
+        rgb = mcolors.colorConverter.to_rgb(fill_color)
+        z[:, :, :3] = rgb
+        z[:, :, -1] = np.linspace(0, alpha, 100)[:, None]
+
+        xmin, xmax, ymin, ymax = x.min(), x.max(), y.min(), y.max()
+        extent = [xmin, xmax, -0.05 * ymax, 1.05 * ymax]
+        im = ax.imshow(z, extent=extent,
+                       aspect='auto', origin='lower', zorder=zorder)
+
+        xy = np.column_stack([x, y])
+        xy = np.vstack([[xmin, ymin], xy, [xmax, ymin], [xmin, ymin]])
+        clip_path = patches.Polygon(xy,
+                                    facecolor='none',
+                                    edgecolor='none',
+                                    closed=True)
+
+        ax.add_patch(clip_path)
+        im.set_clip_path(clip_path)
+
+        ax.autoscale(True)
+
+        return line, im
+
     # center = int(intensities[0].shape[0] / 2)
     # X = np.linspace(-size / 2, size / 2, intensities[0].shape[0])
     cmap = plt.get_cmap('Accent')
@@ -595,10 +709,13 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
     for index, intensity_ in enumerate(intensities):
         center = int(intensity_.shape[0] / 2)
         X = np.linspace(-max_size / 2, max_size / 2, intensity_.shape[0])
-        ax.plot(X, intensity_[center + shift_[index]],
-                color=colors[index],
-                linewidth=3)
-    ax.grid(True, axis='y')
+        # ax.plot(X, intensity_[center + shift_[index]],
+        #         color=colors[index],
+        #         linewidth=3)
+        gradient_fill(ax, X, intensity_[center + shift_[index]],
+                      color=colors[index],
+                      linewidth=3)
+    ax.grid(True, axis='y', linewidth=0.5, alpha=0.5)
     xticklabels = ax.get_xticks() / unit_
     ax.set_xticklabels(xticklabels.astype(int))
     ax.set_xlabel('Size [%s]' % unit)
