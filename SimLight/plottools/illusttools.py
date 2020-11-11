@@ -12,6 +12,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as mcolors
+import matplotlib.ticker as ticker
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.axes_grid1 import make_axes_locatable, axes_size
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -545,9 +546,10 @@ def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
     plt.show()
 
 
-def plot_multi_intensities_diff(*fields, shift=None, labels=None,
-                                norm_type=0, figsize=(6.4, 4.8), mag=1,
-                                unit='µm', title=''):
+def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
+                                labels=None, norm_type=0,
+                                figsize=(6.4, 4.8), mag=1,
+                                unit='µm', title='', ind=False):
     """Plot the intensity difference of the light fields in one line.
 
     Plot the intensity difference of the light fields in one line.
@@ -605,7 +607,7 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
         new_intensity = np.zeros((lower + upper, lower + upper))
         new_intensity[lower:upper, lower:upper] = intensities_[index]
         intensities.append(new_intensity)
-    intensities = np.array(intensities)
+    intensities = np.asarray(intensities)
 
     if norm_type > 0:
         max_value = np.max(intensities[0])
@@ -634,7 +636,11 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
     max_size *= mag
 
     fig = plt.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    if ind is False:
+        ax = fig.add_subplot(111)
+    else:
+        N = len(fields)
+        ax = [fig.add_subplot(1, N, i + 1) for i in range(N)]
 
     # unit
     units = {
@@ -706,25 +712,65 @@ def plot_multi_intensities_diff(*fields, shift=None, labels=None,
     shift_ = np.zeros(len(fields) + 1, dtype=int)
     if shift:
         shift_[:len(shift)] = shift
-    for index, intensity_ in enumerate(intensities):
-        center = int(intensity_.shape[0] / 2)
-        X = np.linspace(-max_size / 2, max_size / 2, intensity_.shape[0])
-        # ax.plot(X, intensity_[center + shift_[index]],
-        #         color=colors[index],
-        #         linewidth=3)
-        gradient_fill(ax, X, intensity_[center + shift_[index]],
-                      color=colors[index],
-                      linewidth=3)
-    ax.grid(True, axis='y', linewidth=0.5, alpha=0.5)
-    xticklabels = ax.get_xticks() / unit_
-    ax.set_xticklabels(xticklabels.astype(int))
-    ax.set_xlabel('Size [%s]' % unit)
-    ax.set_ylabel('Intensity [a.u.]')
-
-    if labels:
-        ax.legend(labels)
-    if title:
-        fig.suptitle(title)
+    if ind is False:
+        for index, intensity_ in enumerate(intensities):
+            center = int(intensity_.shape[0] / 2)
+            X = np.linspace(-max_size / 2, max_size / 2,
+                            intensity_.shape[0])
+            # ax.plot(X, intensity_[center + shift_[index]],
+            #         color=colors[index],
+            #         linewidth=3)
+            gradient_fill(ax, X, intensity_[center + shift_[index]],
+                          color=colors[index],
+                          linewidth=3)
+        ax.grid(True, axis='y', linewidth=0.5, alpha=0.5)
+        xticklabels = ax.get_xticks() / unit_
+        ax.set_xticklabels(xticklabels.astype(int))
+        ax.set_xlabel('Size [%s]' % unit)
+        ax.set_ylabel('Intensity [a.u.]')
+        if labels:
+            ax.legend(labels)
+        if title:
+            fig.suptitle(title)
+    else:
+        for i, axis in enumerate(ax):
+            center = int(intensities[i].shape[0] / 2)
+            X = np.linspace(-max_size / 2, max_size / 2,
+                            intensities[i].shape[0])
+            for j, intensity_ in enumerate(intensities):
+                # center = int(intensity_.shape[0] / 2)
+                # X = np.linspace(-max_size / 2, max_size / 2,
+                #                 intensity_.shape[0])
+                if i != j:
+                    axis.plot(X, intensity_[center + shift_[j]],
+                              color='lightgray',
+                              linewidth=2)
+            gradient_fill(axis, X, intensities[i][center + shift_[i]],
+                          color=colors[i],
+                          linewidth=3,
+                          label=labels[i] if labels else None)
+            xticklabels = axis.get_xticks() / unit_
+            axis.set_xticklabels(xticklabels.astype(int))
+            axis.set_xlabel('Size [%s]' % unit)
+            if i == 0:
+                axis.set_ylabel('Intensity [a.u.]')
+            else:
+                # axis.yaxis.set_major_locator(ticker.NullLocator())
+                axis.yaxis.set_major_formatter(ticker.NullFormatter())
+                axis.tick_params(axis='y', length=0)
+            axis.grid(True, axis='y', linewidth=0.5, alpha=0.5)
+            axis.set_ylim(-0.05 * intensities.max(),
+                          1.05 * intensities.max())
+            # axis.legend(loc='upper right')
+        if labels:
+            l, _, _, _ = ax[0].get_position().bounds
+            bbox_to_anchor = (l / 2, -0.1, 1 - l / 2 - 0.015, 0.1)
+            fig.legend(bbox_to_anchor=bbox_to_anchor,
+                       ncol=len(labels),
+                       mode='expand')
+        if title:
+            fig.suptitle(title, va='top')
+        fig.tight_layout()
 
     plt.show()
 
@@ -1099,7 +1145,7 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
 
     width = 0.7 / len(coeffs) if len(coeffs) > 1 else 0.35
     xticks = np.arange(len(coeffs[0])) + 1
-    cmap_name = 'Accent' if len(coeffs) > 1 else 'Pastel1'
+    cmap_name = 'Accent' if len(coeffs) > 1 else 'tab10'
     cmap = plt.get_cmap(cmap_name)
     colors = cmap(np.arange(len(coeffs)))
 
@@ -1125,7 +1171,7 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
     ax.set_ylabel('Zernike coefficients')
     ax.set_xticks(np.arange(len(xticks)))
     ax.set_xticklabels(xticks)
-    # ax.grid(True, axis='y', linewidth=0.5, alpha=0.2)
+    ax.grid(True, axis='y', linewidth=0.5, color='white')
 
     def autolabel(ims):
         """
