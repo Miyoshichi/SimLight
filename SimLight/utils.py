@@ -293,3 +293,27 @@ def phase_mat2array(filename, key, wavelength, size):
     field = [wavelength, size, N, phase, fid]
 
     return field
+
+
+def approximate_size(size, unit):
+    """
+    Returns a size to 10 multiples.
+
+    Parameters
+    ----------
+    size : float
+        A size to approximate.
+    unit : float
+        Unit of input size.
+
+    Returns
+    ----------
+    appr_size : int
+        A dimensionless number in 10 multiples.
+    """
+    scaled_size = math.ceil(size / unit)
+    scaled_size_number = len(str(scaled_size))
+    appr_size = math.ceil(scaled_size / 10**(scaled_size_number - 1))
+    appr_size *= 10**(scaled_size_number - 1) * unit
+
+    return appr_size

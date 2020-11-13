@@ -22,7 +22,7 @@ from numpy.lib.function_base import average
 import scipy.interpolate
 
 import SimLight as sl
-from ..utils import pv, rms, return_circle_aperature
+from ..utils import pv, rms, return_circle_aperature, approximate_size
 from ..calc import phase, intensity, psf, zernike_coeffs
 from ..units import *
 
@@ -64,7 +64,8 @@ def _gradient_fill(ax, x, y, **kwargs):
     z[:, :, -1] = np.linspace(0, alpha, 100)[:, None]
 
     xmin, xmax, ymin, ymax = x.min(), x.max(), y.min(), y.max()
-    extent = [xmin, xmax, ymin - 0.05 * ymax, 1.05 * ymax]
+    ydiff = ymax - ymin
+    extent = [xmin, xmax, ymin - 0.05 * ydiff, ymax + 0.05 * ydiff]
     im = ax.imshow(z, extent=extent,
                    aspect='auto', origin='lower', zorder=zorder)
 
@@ -184,6 +185,8 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
         PV = 'P-V: ' + str(round(pv(phase_), 3)) + ' λ'
         RMS = 'RMS: ' + str(round(rms(phase_), 3)) + ' λ'
 
+    appr_size = approximate_size(size, unit_)
+
     if dimension == 2:
         fig = plt.figure()
         length = np.linspace(-size / 2, size / 2, phase_.shape[0])
@@ -261,8 +264,8 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
         yticks = np.linspace(-size / 2, size / 2, 5)
         ax.set_xticks(xticks)
         ax.set_yticks(yticks)
-        xticklabels = ax.get_xticks() / mm
-        yticklabels = ax.get_yticks() / mm
+        xticklabels = ax.get_xticks() / unit_
+        yticklabels = ax.get_yticks() / unit_
         ax.set_xticklabels(xticklabels.astype(np.float16))
         ax.set_yticklabels(yticklabels.astype(np.float16))
         ax.set_xlabel('Size [%s]' % unit)
@@ -299,11 +302,23 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
             _gradient_fill(ax, X, phase_[center],
                            linewidth=3,
                            color=color)
-        xticklabels = ax.get_xticks() / mm
+        xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+        ax.set_xticks(xticks)
+        xticklabels = ax.get_xticks() / unit_
         ax.set_xticklabels(xticklabels.astype(np.float16))
         ax.grid(True, axis='y', linewidth=0.5, color='lightgray')
         ax.set_xlabel('Size [%s]' % unit)
         ax.set_ylabel('Wavefront [λ]')
+        ax.spines['bottom'].set_color('none')
+        ax.spines['left'].set_color('none')
+        ax.spines['top'].set_color('none')
+        ax.spines['right'].set_color('none')
+        x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
+        ax.xaxis.set_minor_locator(
+            ticker.MultipleLocator(x_minor_ticklabels))
+        ax.tick_params(which='both', axis='x', colors='gray', width=2)
+        ax.tick_params(which='both', axis='y', colors='gray', width=0)
+
         if title:
             fig.suptitle(title)
 
@@ -394,6 +409,8 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         intensity_ = new_intensity
         size *= mag
 
+    appr_size = approximate_size(size, unit_)
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
@@ -435,59 +452,6 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         # color = cmap(np.asarray([2]))[0]
         color = 'cornflowerblue'
 
-        def gradient_fill(ax, x, y, **kwargs):
-            """
-            Plot a line with a linear alpha gradient filled beneath it.
-
-            Parameters
-            ----------
-            ax : a matplotlib Axes instance
-                The axes to plot on. If None, the current pyplot axes
-                will be used.
-            x, y : array-like
-                The data values of the line.
-            Additional arguments are passed on to matplotlib's ``plot``
-            function.
-
-            Returns
-            ----------
-            line : a Line2D instance
-                The line plotted.
-            im : an AxesImage instance
-                The transparent gradient clipped to just the area beneath
-                the curve.
-            """
-            line, = ax.plot(x, y, **kwargs)
-
-            zorder = line.get_zorder()
-            fill_color = line.get_color()
-            line_alpha = line.get_alpha()
-            alpha = 0.3 if line_alpha is None else 0.3 * line_alpha
-
-            z = np.empty((100, 1, 4), dtype=float)
-            rgb = mcolors.colorConverter.to_rgb(fill_color)
-            z[:, :, :3] = rgb
-            z[:, :, -1] = np.linspace(0, alpha, 100)[:, None]
-
-            xmin, xmax, ymin, ymax = x.min(), x.max(), y.min(), y.max()
-            extent = [xmin, xmax, -0.05 * ymax, 1.05 * ymax]
-            im = ax.imshow(z, extent=extent,
-                           aspect='auto', origin='lower', zorder=zorder)
-
-            xy = np.column_stack([x, y])
-            xy = np.vstack([[xmin, ymin], xy, [xmax, ymin], [xmin, ymin]])
-            clip_path = patches.Polygon(xy,
-                                        facecolor='none',
-                                        edgecolor='none',
-                                        closed=True)
-
-            ax.add_patch(clip_path)
-            im.set_clip_path(clip_path)
-
-            ax.autoscale(True)
-
-            return line, im
-
         if mask_r:
             length = int((intensity_.shape[0] * mask_r) / 2) * 2
             X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
@@ -505,7 +469,7 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
             _gradient_fill(ax, X, intensity_[center],
                            linewidth=3,
                            color=color)
-        xticks = np.linspace(-size / 2, size / 2, 5)
+        xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
         ax.set_xticks(xticks)
         xticklabels = ax.get_xticks() / unit_
         # yticklabels = ax.get_yticks()
@@ -523,7 +487,8 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         # rightax.spines['right'].set_color('none')
         x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
         # y_minor_ticklabels = (yticklabels[1] - yticklabels[0]) / 5
-        ax.xaxis.set_minor_locator(ticker.MultipleLocator(x_minor_ticklabels))
+        ax.xaxis.set_minor_locator(
+            ticker.MultipleLocator(x_minor_ticklabels))
         # ax.yaxis.set_minor_locator(ticker.MultipleLocator(y_minor_ticklabels))
         # topax.xaxis.set_minor_locator(ticker.MultipleLocator(x_minor_ticklabels))
         # topax.xaxis.set_major_formatter(ticker.NullFormatter())
@@ -682,6 +647,17 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
         else:
             raise ValueError('Invalid light field.')
 
+    # unit
+    units = {
+        'm': m,
+        'cm': cm,
+        'mm': mm,
+        'um': µm,
+        'µm': µm,
+        'nm': nm
+    }
+    unit_ = units[unit]
+
     intensities = []
     for index, field in enumerate(fields):
         frac = max_size / field.size
@@ -716,75 +692,14 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
         intensities = new_intensities
     max_size *= mag
 
+    appr_size = approximate_size(max_size, unit_)
+
     fig = plt.figure(figsize=figsize)
     if ind is False:
         ax = fig.add_subplot(111)
     else:
         N = len(fields)
         ax = [fig.add_subplot(1, N, i + 1) for i in range(N)]
-
-    # unit
-    units = {
-        'm': m,
-        'cm': cm,
-        'mm': mm,
-        'um': µm,
-        'µm': µm,
-        'nm': nm
-    }
-    unit_ = units[unit]
-
-    def gradient_fill(ax, x, y, **kwargs):
-        """
-        Plot a line with a linear alpha gradient filled beneath it.
-
-        Parameters
-        ----------
-        ax : a matplotlib Axes instance
-            The axes to plot on. If None, the current pyplot axes
-            will be used.
-        x, y : array-like
-            The data values of the line.
-        Additional arguments are passed on to matplotlib's ``plot`` function.
-
-        Returns
-        ----------
-        line : a Line2D instance
-            The line plotted.
-        im : an AxesImage instance
-            The transparent gradient clipped to just the area beneath
-            the curve.
-        """
-        line, = ax.plot(x, y, **kwargs)
-
-        zorder = line.get_zorder()
-        fill_color = line.get_color()
-        line_alpha = line.get_alpha()
-        alpha = 0.3 if line_alpha is None else 0.3 * line_alpha
-
-        z = np.empty((100, 1, 4), dtype=float)
-        rgb = mcolors.colorConverter.to_rgb(fill_color)
-        z[:, :, :3] = rgb
-        z[:, :, -1] = np.linspace(0, alpha, 100)[:, None]
-
-        xmin, xmax, ymin, ymax = x.min(), x.max(), y.min(), y.max()
-        extent = [xmin, xmax, -0.05 * ymax, 1.05 * ymax]
-        im = ax.imshow(z, extent=extent,
-                       aspect='auto', origin='lower', zorder=zorder)
-
-        xy = np.column_stack([x, y])
-        xy = np.vstack([[xmin, ymin], xy, [xmax, ymin], [xmin, ymin]])
-        clip_path = patches.Polygon(xy,
-                                    facecolor='none',
-                                    edgecolor='none',
-                                    closed=True)
-
-        ax.add_patch(clip_path)
-        im.set_clip_path(clip_path)
-
-        ax.autoscale(True)
-
-        return line, im
 
     # center = int(intensities[0].shape[0] / 2)
     # X = np.linspace(-size / 2, size / 2, intensities[0].shape[0])
@@ -803,14 +718,30 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
             #         linewidth=3)
             _gradient_fill(ax, X, intensity_[center + shift_[index]],
                            color=colors[index],
-                           linewidth=3)
+                           linewidth=3,
+                           label=labels[index] if labels else None)
         ax.grid(True, axis='y', linewidth=0.5, color='lightgray')
+        xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+        ax.set_xticks(xticks)
         xticklabels = ax.get_xticks() / unit_
-        ax.set_xticklabels(xticklabels.astype(int))
+        ax.set_xticklabels(xticklabels.astype(np.float16))
         ax.set_xlabel('Size [%s]' % unit)
         ax.set_ylabel('Intensity [a.u.]')
+        ax.spines['bottom'].set_color('none')
+        ax.spines['left'].set_color('none')
+        ax.spines['top'].set_color('none')
+        ax.spines['right'].set_color('none')
+        x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
+        ax.xaxis.set_minor_locator(
+            ticker.MultipleLocator(x_minor_ticklabels))
+        ax.tick_params(which='both', axis='x', colors='gray', width=2)
+        ax.tick_params(which='both', axis='y', colors='gray', width=0)
         if labels:
-            ax.legend(labels)
+            l, _, _, _ = ax.get_position().bounds
+            bbox_to_anchor = (l, -0.1, 1 - 2 * l, 0.1)
+            fig.legend(bbox_to_anchor=bbox_to_anchor,
+                       ncol=len(labels),
+                       mode='expand')
         if title:
             fig.suptitle(title)
     else:
@@ -830,8 +761,10 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
                            color=colors[i],
                            linewidth=3,
                            label=labels[i] if labels else None)
+            xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+            axis.set_xticks(xticks)
             xticklabels = axis.get_xticks() / unit_
-            axis.set_xticklabels(xticklabels.astype(int))
+            axis.set_xticklabels(xticklabels.astype(np.float))
             axis.set_xlabel('Size [%s]' % unit)
             if i == 0:
                 axis.set_ylabel('Intensity [a.u.]')
@@ -839,11 +772,23 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
                 axis.yaxis.set_major_formatter(ticker.NullFormatter())
                 axis.tick_params(axis='y', length=0)
             axis.grid(True, axis='y', linewidth=0.5, color='lightgray')
+            axis.spines['bottom'].set_color('none')
+            axis.spines['left'].set_color('none')
+            axis.spines['top'].set_color('none')
+            axis.spines['right'].set_color('none')
+            x_minor_ticklabels = (xticklabels[1] -
+                                  xticklabels[0]) / 5 * unit_
+            axis.xaxis.set_minor_locator(
+                ticker.MultipleLocator(x_minor_ticklabels))
+            axis.tick_params(which='both', axis='x',
+                             colors='gray', width=2)
+            axis.tick_params(which='both', axis='y',
+                             colors='gray', width=0)
             axis.set_ylim(-0.05 * intensities.max(),
                           1.05 * intensities.max())
         if labels:
             l, _, _, _ = ax[0].get_position().bounds
-            bbox_to_anchor = (l / 2, -0.1, 1 - l / 2 - 0.015, 0.1)
+            bbox_to_anchor = (l / 2, -0.1, 1 - l + 0.025, 0.1)
             fig.legend(bbox_to_anchor=bbox_to_anchor,
                        ncol=len(labels),
                        mode='expand')
