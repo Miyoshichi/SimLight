@@ -329,7 +329,7 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
 
 
 def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
-                   unit='µm', title='', return_data=False):
+                   unit='µm', title='', return_data=False, **kwargs):
     """Plot the intensity.
 
     Plot the intensity of light field using matplotlib.
@@ -450,7 +450,8 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         center = int(intensity_.shape[0] / 2)
         # cmap = plt.get_cmap('Accent')
         # color = cmap(np.asarray([2]))[0]
-        color = 'cornflowerblue'
+        color = ('cornflowerblue'
+                 if kwargs['color'] is None else kwargs['color'])
 
         if mask_r:
             length = int((intensity_.shape[0] * mask_r) / 2) * 2
@@ -788,7 +789,7 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
                           1.05 * intensities.max())
         if labels:
             l, _, _, _ = ax[0].get_position().bounds
-            bbox_to_anchor = (l / 2, -0.1, 1 - l + 0.025, 0.1)
+            bbox_to_anchor = (l / 2, -0.1, 1 - l + 0.03, 0.1)
             fig.legend(bbox_to_anchor=bbox_to_anchor,
                        ncol=len(labels),
                        mode='expand')
