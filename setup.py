@@ -21,7 +21,7 @@ setup(
     packages=['SimLight'],
     install_requires=[
         'numpy',
-        'matplotlib',
+        'matplotlib>=3.2.2',
         'matplotlib_scalebar',
         'julia',
         'scipy',

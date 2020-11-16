@@ -189,32 +189,59 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
 
     if dimension == 2:
         fig = plt.figure()
+        ax = fig.add_subplot(111)
         length = np.linspace(-size / 2, size / 2, phase_.shape[0])
         X, Y = np.meshgrid(length, length)
-        extent = [-size / 2, size / 2, -size / 2, size / 2]
-        ax = fig.add_subplot(111)
-        im = ax.imshow(phase_, cmap='rainbow', extent=extent,
-                       vmin=min_value, vmax=max_value)
         if mask_r:
+            extent = [-appr_size / 2, appr_size / 2,
+                      -appr_size / 2, appr_size / 2]
+            im = ax.imshow(phase_, cmap='rainbow', extent=extent,
+                           vmin=min_value, vmax=max_value)
             mask = patches.Circle([0, 0], size * mask_r / 2,
-                                  fc='none', ec='none',)
+                                  fc='none', ec='k',)
             ax.add_patch(mask)
             im.set_clip_path(mask)
             radius = np.sqrt(X**2 + Y**2)
             phase_[radius > size * mask_r / 2] = 0
-        xticks = np.linspace(-size / 2, size / 2, 5)
-        yticks = np.linspace(-size / 2, size / 2, 5)
-        ax.set_xticks(xticks)
-        ax.set_yticks(yticks)
+            ax.spines['bottom'].set_color('none')
+            ax.spines['top'].set_color('none')
+            ax.spines['left'].set_color('none')
+            ax.spines['right'].set_color('none')
+            ax.tick_params(axis='both', width=0)
+            # xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+            # yticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+            # ax.set_xticks(xticks)
+            # ax.set_yticks(yticks)
+            ax.text(0., 0.975, PV,
+                    fontsize=12,
+                    horizontalalignment='left',
+                    transform=ax.transAxes)
+            ax.text(0., 0.925, RMS,
+                    fontsize=12,
+                    horizontalalignment='left',
+                    transform=ax.transAxes)
+        else:
+            extent = [-size / 2, size / 2, -size / 2, size / 2]
+            im = ax.imshow(phase_, cmap='rainbow', extent=extent,
+                           vmin=min_value, vmax=max_value)
+            # xticks = np.linspace(-size / 2, size / 2, 5)
+            # yticks = np.linspace(-size / 2, size / 2, 5)
+            ax.text(0.05, 0.925, PV,
+                    fontsize=12,
+                    horizontalalignment='left',
+                    transform=ax.transAxes)
+            ax.text(0.05, 0.875, RMS,
+                    fontsize=12,
+                    horizontalalignment='left',
+                    transform=ax.transAxes)
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
         xticklabels = ax.get_xticks() / unit_
         yticklabels = ax.get_yticks() / unit_
         ax.set_xticklabels(xticklabels.astype(np.float16))
         ax.set_yticklabels(yticklabels.astype(np.float16))
-        ax.set_xlabel('Size [%s]' % unit)
-        ax.text(0.05, 0.95, PV, fontsize=12, horizontalalignment='left',
-                transform=ax.transAxes)
-        ax.text(0.05, 0.90, RMS, fontsize=12, horizontalalignment='left',
-                transform=ax.transAxes)
+        ax.set_xlabel('x [%s]' % unit)
+        ax.set_ylabel('y [%s]' % unit)
         fig.colorbar(im)
         if title:
             fig.suptitle(title)
@@ -250,6 +277,7 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
                             bbox_transform=ax.transAxes,
                             borderpad=0)
         ax = fig.add_subplot(111, projection='3d')
+        # ax.view_init(elev=20, azim=-60)
         if PV != 'P-V: 0.0 λ' or RMS != 'RMS: 0.0 λ':
             cset = ax.contourf(X, Y, phase_,
                                zdir='z',
@@ -260,16 +288,33 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
                              cmap='rainbow', alpha=0.9,
                              vmin=min_value, vmax=max_value)
         ax.set_zlim(lower_value, upper_value)
-        xticks = np.linspace(-size / 2, size / 2, 5)
-        yticks = np.linspace(-size / 2, size / 2, 5)
-        ax.set_xticks(xticks)
-        ax.set_yticks(yticks)
+        # xticks = np.linspace(-size / 2, size / 2, 5)
+        # yticks = np.linspace(-size / 2, size / 2, 5)
+        # ax.set_xticks(xticks)
+        # ax.set_yticks(yticks)
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+        ax.zaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
         xticklabels = ax.get_xticks() / unit_
         yticklabels = ax.get_yticks() / unit_
         ax.set_xticklabels(xticklabels.astype(np.float16))
         ax.set_yticklabels(yticklabels.astype(np.float16))
-        ax.set_xlabel('Size [%s]' % unit)
-        ax.set_zlabel('Wavefront [λ]')
+        ax.set_xlabel('x [%s]' % unit)
+        ax.set_ylabel('y [%s]' % unit)
+        ax.set_zlabel('Waves [λ]')
+        ax.xaxis.line.set_color('none')
+        ax.yaxis.line.set_color('none')
+        ax.zaxis.line.set_color('none')
+        ax.tick_params(which='both', axis='both', colors='gray', width=2)
+        for tickline in ax.zaxis.get_ticklines():
+            tickline.set_solid_capstyle('round')
+            tickline.set_linewidth(2)
+        for tickline in ax.xaxis.get_majorticklines():
+            tickline.set_solid_capstyle('round')
+            tickline.set_linewidth(2)
+        for tickline in ax.yaxis.get_majorticklines():
+            tickline.set_solid_capstyle('round')
+            tickline.set_linewidth(2)
         ax.text2D(0.925, 0.75, PV,
                   fontsize=12,
                   horizontalalignment='right',
@@ -308,7 +353,7 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
         ax.set_xticklabels(xticklabels.astype(np.float16))
         ax.grid(True, axis='y', linewidth=0.5, color='lightgray')
         ax.set_xlabel('Size [%s]' % unit)
-        ax.set_ylabel('Wavefront [λ]')
+        ax.set_ylabel('Waves [λ]')
         ax.spines['bottom'].set_color('none')
         ax.spines['left'].set_color('none')
         ax.spines['top'].set_color('none')
@@ -316,8 +361,15 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
         x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
         ax.xaxis.set_minor_locator(
             ticker.MultipleLocator(x_minor_ticklabels))
-        ax.tick_params(which='both', axis='x', colors='gray', width=2)
+        ax.tick_params(which='major', axis='x', colors='gray',
+                       width=2, size=2.5)
+        ax.tick_params(which='minor', axis='x', colors='gray',
+                       width=2, size=0.5)
         ax.tick_params(which='both', axis='y', colors='gray', width=0)
+        for tickline in ax.xaxis.get_majorticklines():
+            tickline._marker._capstyle = 'round'
+        for tickline in ax.xaxis.get_minorticklines():
+            tickline._marker._capstyle = 'round'
 
         if title:
             fig.suptitle(title)
@@ -495,10 +547,17 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         # topax.xaxis.set_major_formatter(ticker.NullFormatter())
         # rightax.yaxis.set_minor_locator(ticker.MultipleLocator(y_minor_ticklabels))
         # rightax.yaxis.set_major_formatter(ticker.NullFormatter())
-        ax.tick_params(which='both', axis='x', colors='gray', width=2)
+        ax.tick_params(which='major', axis='x', colors='gray',
+                       width=2, size=2.5)
+        ax.tick_params(which='minor', axis='x', colors='gray',
+                       width=2, size=0.5)
         ax.tick_params(which='both', axis='y', colors='gray', width=0)
         # topax.tick_params(which='both', colors='gray', width=2)
         # rightax.tick_params(which='both', colors='gray', width=2)
+        for tickline in ax.xaxis.get_majorticklines():
+            tickline._marker._capstyle = 'round'
+        for tickline in ax.xaxis.get_minorticklines():
+            tickline._marker._capstyle = 'round'
 
     if title:
         fig.suptitle(title)
@@ -735,8 +794,15 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
         x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
         ax.xaxis.set_minor_locator(
             ticker.MultipleLocator(x_minor_ticklabels))
-        ax.tick_params(which='both', axis='x', colors='gray', width=2)
+        ax.tick_params(which='major', axis='x', colors='gray',
+                       width=2, size=2.5)
+        ax.tick_params(which='minor', axis='x', colors='gray',
+                       width=2, size=0.5)
         ax.tick_params(which='both', axis='y', colors='gray', width=0)
+        for tickline in ax.xaxis.get_majorticklines():
+            tickline._marker._capstyle = 'round'
+        for tickline in ax.xaxis.get_minorticklines():
+            tickline._marker._capstyle = 'round'
         if labels:
             l, _, _, _ = ax.get_position().bounds
             bbox_to_anchor = (l, -0.1, 1 - 2 * l, 0.1)
@@ -781,10 +847,16 @@ def plot_multi_intensities_diff(*fields, mask_r=None, shift=None,
                                   xticklabels[0]) / 5 * unit_
             axis.xaxis.set_minor_locator(
                 ticker.MultipleLocator(x_minor_ticklabels))
-            axis.tick_params(which='both', axis='x',
-                             colors='gray', width=2)
+            axis.tick_params(which='major', axis='x',
+                             colors='gray', width=2, size=2.5)
+            axis.tick_params(which='minor', axis='x',
+                             colors='gray', width=2, size=0.5)
             axis.tick_params(which='both', axis='y',
                              colors='gray', width=0)
+            for tickline in axis.xaxis.get_majorticklines():
+                tickline._marker._capstyle = 'round'
+            for tickline in axis.xaxis.get_minorticklines():
+                tickline._marker._capstyle = 'round'
             axis.set_ylim(-0.05 * intensities.max(),
                           1.05 * intensities.max())
         if labels:
