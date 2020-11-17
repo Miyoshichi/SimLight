@@ -1256,19 +1256,36 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
                                                  color=colors[index],
                                                  width=width,
                                                  edgecolor='white',
-                                                 linewidth=1)
+                                                 linewidth=1,
+                                                 label=labels[index] if labels else None,
+                                                 zorder=2)
 
     prop = abs(np.min(coeffs)) / (abs(np.min(coeffs)) + np.max(coeffs))
     labelpad = 250 * prop
 
+    yticks = ax.get_yticks()
+    ylim = ax.get_ylim()
+
+    for i in range(1, len(yticks), 2):
+        if yticks[i + 1] < np.max(ylim):
+            ax.axhspan(yticks[i], yticks[i + 1], facecolor='whitesmoke',
+                       zorder=0)
     ax.spines['top'].set_color('none')
-    ax.spines['right'].set_color('none')
     ax.spines['bottom'].set_position(('data', 0))
+    ax.spines['bottom'].set_color('gray')
+    ax.spines['left'].set_color('none')
+    ax.spines['right'].set_color('none')
     ax.set_xlabel('Zernike polynomials orders', labelpad=labelpad)
     ax.set_ylabel('Zernike coefficients')
+    ax.tick_params(axis='y', colors='gray', width=0)
+    ax.tick_params(axis='x', colors='gray', width=2, direction='inout')
+    for tickline in ax.xaxis.get_majorticklines():
+        tickline._marker._capstyle = 'round'
+    ax.xaxis.set_zorder(3)
     ax.set_xticks(np.arange(len(xticks)))
     ax.set_xticklabels(xticks)
-    ax.grid(True, axis='y', linewidth=0.5, color='white')
+    ax.set_ylim(ylim)
+    ax.grid(True, axis='y', linewidth=0.5, color='lightgray', zorder=0)
 
     def autolabel(ims):
         """
@@ -1293,7 +1310,12 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
         autolabel(locals()['im' + str(i + 1)])
 
     if labels:
-        ax.legend(labels)
+        ax.legend(loc='upper left')
+        # l, _, _, _ = ax.get_position().bounds
+        # bbox_to_anchor = (l / 2, -0.1, 1 - l + 0.03, 0.1)
+        # fig.legend(bbox_to_anchor=bbox_to_anchor,
+        #            ncol=len(labels),
+        #            mode='expand')
     if title:
         # ax.set_title(title, pad=20)
         fig.suptitle(title)
