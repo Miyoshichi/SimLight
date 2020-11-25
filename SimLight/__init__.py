@@ -14,6 +14,7 @@
 from ._version import __version__
 from .field import Field, PlaneWave, SphericalWave, Gaussian
 from .lens import Lens, CylindricalLens
+from .scattering import ScatteringLayer
 from .propagation import propagation, near_field_propagation
 from .calc import (phase, intensity, aberration, sidel_aberration,
                    delta_wavefront, deformable_mirror, zernike_coeffs)

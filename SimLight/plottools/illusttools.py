@@ -914,7 +914,8 @@ def plot_wavefront_diff(*fields, mask_r=1, dimension=2, unit='mm',
         else:
             raise ValueError('Invalid light field.')
 
-    diff_surface = surface1 - surface2
+    # diff_surface = surface1 - surface2
+    diff_surface = globals()['surface1'] - globals()['surface2']
     fid = 'SimLight.plottools'
     diff_field = [wavelength, size, N, diff_surface, fid]
 
@@ -1242,9 +1243,10 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
 
     width = 0.7 / len(coeffs) if len(coeffs) > 1 else 0.35
     xticks = np.arange(len(coeffs[0])) + 1
-    cmap_name = 'Accent' if len(coeffs) > 1 else 'tab10'
+    cmap_name = 'Accent'
     cmap = plt.get_cmap(cmap_name)
-    colors = cmap(np.arange(len(coeffs)))
+    colors = (cmap(np.arange(len(coeffs)))
+              if len(coeffs) > 1 else ['cornflowerblue'])
 
     for index, coeff in enumerate(coeffs):
         orders = np.arange(len(coeff))
@@ -1257,7 +1259,9 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
                                                  width=width,
                                                  edgecolor='white',
                                                  linewidth=1,
-                                                 label=labels[index] if labels else None,
+                                                 label=(labels[index]
+                                                        if labels
+                                                        else None),
                                                  zorder=2)
 
     prop = abs(np.min(coeffs)) / (abs(np.min(coeffs)) + np.max(coeffs))
