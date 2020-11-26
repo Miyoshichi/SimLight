@@ -129,6 +129,12 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
         N = field.N
         phase_ = phase(field, unwrap=unwrap)
         lambdaflag = False
+    elif isinstance(field, sl.ScatteringLayer) is True:
+        wavelength = field.wavelength
+        size = field.size[0]
+        N = field.N[0]
+        phase_ = phase(field, unwrap=unwrap)
+        lambdaflag = False
     elif isinstance(field, list) is True:
         if len(field) == 6:
             wavelength = field[0]
@@ -429,6 +435,9 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
             raise ValueError('Invalid dimension.')
     if isinstance(field, sl.Field) is True:
         size = field.size
+        intensity_ = intensity(field, norm_type=norm_type)
+    elif isinstance(field, sl.ScatteringLayer) is True:
+        size = field.size[0]
         intensity_ = intensity(field, norm_type=norm_type)
     elif isinstance(field, list) is True:
         size = field[0]

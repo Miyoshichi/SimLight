@@ -40,6 +40,10 @@ def phase(field, unwrap=False, **kwargs):
         phase_ratio = field.phase_ratio
         # wavelength = field.wavelength
         phase = np.angle(field.complex_amp2)
+    elif isinstance(field, sl.ScatteringLayer) is True:
+        N = field.N[0]
+        phase_ratio = field.phase_ratio
+        phase = np.angle(field.complex_amp2)
     elif isinstance(field, np.ndarray) is True:
         N = field.shape[0]
         phase_ratio = kwargs['phase_ratio']
@@ -76,6 +80,8 @@ def intensity(field, norm_type=1):
             The intensity of the light field.
     """
     if isinstance(field, sl.Field) is True:
+        intensity = np.abs(field.complex_amp)**2
+    elif isinstance(field, sl.ScatteringLayer) is True:
         intensity = np.abs(field.complex_amp)**2
     elif isinstance(field, np.ndarray) is True:
         intensity = np.abs(field)**2
