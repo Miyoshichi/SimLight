@@ -32,9 +32,13 @@ class ScatteringLayer:
         self._phase_ratio = 1
         self._complex_amp = self.__set_complex_amp(self._wavelength,
                                                    self._size,
+                                                   self._N,
+                                                   self._n0,
                                                    self._dn)
         self._complex_amp2 = self.__set_complex_amp(self._wavelength,
                                                     self._size,
+                                                    self._N,
+                                                    self._n0,
                                                     self._dn)
 
     @classmethod
@@ -65,25 +69,28 @@ class ScatteringLayer:
             dn = np.asarray(dn)
             n = np.array(dn + n0)
 
-        scattering_layer = cls(wavelength, size, N, n0, n, dn)
+        scattering_layer = cls(wavelength, size, N, n0, n.T, dn.T)
         return scattering_layer
 
     @staticmethod
-    def __set_complex_amp(wavelength, size, dn):
+    def __set_complex_amp(wavelength, size, N, n0, dn):
         # units conversion
-        wavelength /= µm
-        size = list(size)
-        for i in range(len(size)):
-            size[i] /= µm
-        size = tuple(size)
+        wavelength_um = wavelength / µm
+        size_um = list(size)
+        for i in range(len(size_um)):
+            size_um[i] /= µm
+        size_um = tuple(size_um)
 
-        m = biobeam.Bpm3d(size=size,
-                          lam=wavelength,
+        m = biobeam.Bpm3d(size=size_um,
+                          shape=N,
+                          lam=wavelength_um,
+                          n0=n0,
                           dn=dn,
                           n_volumes=1)
+
         u = m.propagate()
 
-        return u[:, :, -1]
+        return u[-1, :, :]
 
     @property
     def wavelength(self):
