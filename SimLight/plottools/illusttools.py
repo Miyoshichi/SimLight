@@ -29,6 +29,72 @@ from ..units import *
 np.random.seed(235)
 
 
+class Wavefront:
+    """
+    """
+    def __init__(self, phase):
+        """
+        """
+        self._wavefront_distribution = phase
+        self._pv = self.__pv(phase)
+        self._rms = self.__rms(phase)
+
+    @staticmethod
+    def __pv(wavefront):
+        """
+        """
+        return pv(wavefront, mask=True)
+
+    @staticmethod
+    def __rms(wavefront):
+        """
+        docstring
+        """
+        return rms(wavefront, mask=True)
+
+    @property
+    def wavefront(self):
+        return self._wavefront
+
+    @property
+    def pv(self):
+        return self._pv
+
+    @property
+    def rms(self):
+        return self._rms
+
+
+class Intensity:
+    """
+    """
+    def __init__(self, raw_intensity, normlized_intensity):
+        """
+        docstring
+        """
+        self._intensity_distrubution = raw_intensity
+        self._normlized_intensity = normlized_intensity
+        self._max_intensity = self.__max_intensity(raw_intensity)
+
+    @staticmethod
+    def __max_intensity(intensity):
+        """
+        """
+        return np.nanmax(intensity)
+
+    @property
+    def intensity_distrubution(self):
+        return self._intensity_distrubution
+
+    @property
+    def normlized_intensity(self):
+        return self._normlized_intensity
+
+    @property
+    def max_intensity(self):
+        return self._max_intensity
+
+
 def _gradient_fill(ax, x, y, **kwargs):
     """
     Plot a line with a linear alpha gradient filled beneath it.
@@ -383,7 +449,9 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
     plt.show()
 
     if noise is True or return_data is True:
-        return phase_
+        wavefront = Wavefront(phase_)
+        return wavefront
+        # return phase_
 
 
 def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
@@ -435,13 +503,14 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
             raise ValueError('Invalid dimension.')
     if isinstance(field, sl.Field) is True:
         size = field.size
-        intensity_ = intensity(field, norm_type=norm_type)
+        raw_intensity, intensity_ = intensity(field, norm_type=norm_type)
     elif isinstance(field, sl.ScatteringLayer) is True:
         size = field.size[0]
-        intensity_ = intensity(field, norm_type=norm_type)
+        raw_intensity, intensity_ = intensity(field, norm_type=norm_type)
     elif isinstance(field, list) is True:
         size = field[0]
-        intensity_ = intensity(field[2], norm_type=norm_type)
+        raw_intensity, intensity_ = intensity(field[2],
+                                              norm_type=norm_type)
     else:
         raise ValueError('Invalid light field.')
 
@@ -574,7 +643,9 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
     plt.show()
 
     if return_data is True:
-        return intensity_
+        intensity_ins = Intensity(raw_intensity, intensity_)
+        return intensity_ins
+        # return intensity_
 
 
 def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):

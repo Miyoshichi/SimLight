@@ -88,6 +88,8 @@ def intensity(field, norm_type=1):
     else:
         raise ValueError('Invalid light field')
 
+    raw_intensity = intensity
+
     if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
         raise ValueError('Unknown normalization type.')
     elif norm_type >= 1:
@@ -95,7 +97,7 @@ def intensity(field, norm_type=1):
         if norm_type == 2:
             intensity *= 255
 
-    return intensity
+    return raw_intensity, intensity
 
 
 def psf(field, aperture_type='circle'):
@@ -180,7 +182,7 @@ def aberration(field, zernike, nflag='rms'):
     j = zernike.j
     coeff = zernike.coefficients
 
-    phase_ratio = np.max(coeff) / 0.1
+    phase_ratio = np.max(np.abs(coeff)) / 0.1
     coeff /= phase_ratio
 
     # x = np.linspace(-size, size, N)
