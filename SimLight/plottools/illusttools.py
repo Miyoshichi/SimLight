@@ -30,26 +30,18 @@ np.random.seed(235)
 
 
 class Wavefront:
-    """
-    """
-    def __init__(self, phase):
-        """
-        """
+    def __init__(self, phase, size):
         self._wavefront_distribution = phase
         self._pv = self.__pv(phase)
         self._rms = self.__rms(phase)
+        self._size = size
 
     @staticmethod
     def __pv(wavefront):
-        """
-        """
         return pv(wavefront, mask=True)
 
     @staticmethod
     def __rms(wavefront):
-        """
-        docstring
-        """
         return rms(wavefront, mask=True)
 
     @property
@@ -64,22 +56,20 @@ class Wavefront:
     def rms(self):
         return self._rms
 
+    @property
+    def size(self):
+        return self._size
+
 
 class Intensity:
-    """
-    """
-    def __init__(self, raw_intensity, normlized_intensity):
-        """
-        docstring
-        """
+    def __init__(self, raw_intensity, normlized_intensity, size):
         self._intensity_distrubution = raw_intensity
         self._normlized_intensity = normlized_intensity
         self._max_intensity = self.__max_intensity(raw_intensity)
+        self._size = size
 
     @staticmethod
     def __max_intensity(intensity):
-        """
-        """
         return np.nanmax(intensity)
 
     @property
@@ -93,6 +83,10 @@ class Intensity:
     @property
     def max_intensity(self):
         return self._max_intensity
+
+    @property
+    def size(self):
+        return self._size
 
 
 def _gradient_fill(ax, x, y, **kwargs):
@@ -151,7 +145,8 @@ def _gradient_fill(ax, x, y, **kwargs):
 
 
 def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
-                   title='', return_data=False, **kwargs):
+                   title='', return_data=False, showing=True,
+                   **kwargs):
     """Plot the wavefront.
 
     Plot the wavefront of light field using matplotlib.
@@ -259,203 +254,205 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
 
     appr_size = approximate_size(size, unit_)
 
-    if dimension == 2:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        length = np.linspace(-size / 2, size / 2, phase_.shape[0])
-        X, Y = np.meshgrid(length, length)
-        if mask_r:
-            extent = [-appr_size / 2, appr_size / 2,
-                      -appr_size / 2, appr_size / 2]
-            im = ax.imshow(phase_, cmap='rainbow', extent=extent,
-                           vmin=min_value, vmax=max_value)
-            mask = patches.Circle([0, 0], size * mask_r / 2,
-                                  fc='none', ec='k',)
-            ax.add_patch(mask)
-            im.set_clip_path(mask)
-            radius = np.sqrt(X**2 + Y**2)
-            phase_[radius > size * mask_r / 2] = 0
-            ax.spines['bottom'].set_color('none')
-            ax.spines['top'].set_color('none')
-            ax.spines['left'].set_color('none')
-            ax.spines['right'].set_color('none')
-            ax.tick_params(axis='both', width=0)
-            # xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
-            # yticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
-            # ax.set_xticks(xticks)
-            # ax.set_yticks(yticks)
-            ax.text(0., 0.975, PV,
-                    fontsize=12,
-                    horizontalalignment='left',
-                    transform=ax.transAxes)
-            ax.text(0., 0.925, RMS,
-                    fontsize=12,
-                    horizontalalignment='left',
-                    transform=ax.transAxes)
-        else:
-            extent = [-size / 2, size / 2, -size / 2, size / 2]
-            im = ax.imshow(phase_, cmap='rainbow', extent=extent,
-                           vmin=min_value, vmax=max_value)
+    if showing is True:
+        if dimension == 2:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            length = np.linspace(-size / 2, size / 2, phase_.shape[0])
+            X, Y = np.meshgrid(length, length)
+            if mask_r:
+                extent = [-appr_size / 2, appr_size / 2,
+                          -appr_size / 2, appr_size / 2]
+                im = ax.imshow(phase_, cmap='rainbow', extent=extent,
+                               vmin=min_value, vmax=max_value)
+                mask = patches.Circle([0, 0], size * mask_r / 2,
+                                      fc='none', ec='k',)
+                ax.add_patch(mask)
+                im.set_clip_path(mask)
+                radius = np.sqrt(X**2 + Y**2)
+                phase_[radius > size * mask_r / 2] = 0
+                ax.spines['bottom'].set_color('none')
+                ax.spines['top'].set_color('none')
+                ax.spines['left'].set_color('none')
+                ax.spines['right'].set_color('none')
+                ax.tick_params(axis='both', width=0)
+                # xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+                # yticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+                # ax.set_xticks(xticks)
+                # ax.set_yticks(yticks)
+                ax.text(0., 0.975, PV,
+                        fontsize=12,
+                        horizontalalignment='left',
+                        transform=ax.transAxes)
+                ax.text(0., 0.925, RMS,
+                        fontsize=12,
+                        horizontalalignment='left',
+                        transform=ax.transAxes)
+            else:
+                extent = [-size / 2, size / 2, -size / 2, size / 2]
+                im = ax.imshow(phase_, cmap='rainbow', extent=extent,
+                               vmin=min_value, vmax=max_value)
+                # xticks = np.linspace(-size / 2, size / 2, 5)
+                # yticks = np.linspace(-size / 2, size / 2, 5)
+                ax.text(0.05, 0.925, PV,
+                        fontsize=12,
+                        horizontalalignment='left',
+                        transform=ax.transAxes)
+                ax.text(0.05, 0.875, RMS,
+                        fontsize=12,
+                        horizontalalignment='left',
+                        transform=ax.transAxes)
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            xticklabels = ax.get_xticks() / unit_
+            yticklabels = ax.get_yticks() / unit_
+            ax.set_xticklabels(xticklabels.astype(np.float16))
+            ax.set_yticklabels(yticklabels.astype(np.float16))
+            ax.set_xlabel('x [%s]' % unit)
+            ax.set_ylabel('y [%s]' % unit)
+            fig.colorbar(im)
+            if title:
+                fig.suptitle(title)
+        elif dimension == 3:
+            plt.rcParams.update({
+                'grid.linewidth': 0.5,
+                'grid.color': [0, 0, 0, 0.1],
+            })
+            length = np.linspace(-size / 2, size / 2, phase_.shape[0])
+            X, Y = np.meshgrid(length, length)
+            upper_value = max_value + (max_value - min_value) / 2
+            lower_value = min_value - (max_value - min_value) / 5
+            # stride = math.ceil(N / 25)
+            rccount = 100
+            if mask_r:
+                radius = np.sqrt(X**2 + Y**2)
+                # X[radius > size * mask_r / 2] = np.nan
+                # Y[radius > size * mask_r / 2] = np.nan
+                phase_[radius > size * mask_r / 2] = np.nan
+            fig = plt.figure(figsize=(8, 5))
+            ax = fig.add_subplot(111)
+            # aspect = 40
+            # pad_fraction = 0.5
+            # divider = make_axes_locatable(ax)
+            # width = axes_size.AxesY(ax, aspect=1. / aspect)
+            # pad = axes_size.Fraction(pad_fraction, width)
+            # cax = divider.append_axes('right', size=width, pad=pad)
+            caxins = inset_axes(ax,
+                                width='2.5%',
+                                height='85%',
+                                loc='right',
+                                bbox_to_anchor=(-0.075, -0.025, 1, 1),
+                                bbox_transform=ax.transAxes,
+                                borderpad=0)
+            ax = fig.add_subplot(111, projection='3d')
+            # ax.view_init(elev=20, azim=-60)
+            if PV != 'P-V: 0.0 λ' or RMS != 'RMS: 0.0 λ':
+                cset = ax.contourf(X, Y, phase_,
+                                   zdir='z',
+                                   offset=lower_value,
+                                   cmap='rainbow', alpha=0.5)
+            im = ax.plot_surface(X, Y, phase_,
+                                 rcount=rccount, ccount=rccount,
+                                 cmap='rainbow', alpha=0.9,
+                                 vmin=min_value, vmax=max_value)
+            ax.set_zlim(lower_value, upper_value)
             # xticks = np.linspace(-size / 2, size / 2, 5)
             # yticks = np.linspace(-size / 2, size / 2, 5)
-            ax.text(0.05, 0.925, PV,
-                    fontsize=12,
-                    horizontalalignment='left',
-                    transform=ax.transAxes)
-            ax.text(0.05, 0.875, RMS,
-                    fontsize=12,
-                    horizontalalignment='left',
-                    transform=ax.transAxes)
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-        xticklabels = ax.get_xticks() / unit_
-        yticklabels = ax.get_yticks() / unit_
-        ax.set_xticklabels(xticklabels.astype(np.float16))
-        ax.set_yticklabels(yticklabels.astype(np.float16))
-        ax.set_xlabel('x [%s]' % unit)
-        ax.set_ylabel('y [%s]' % unit)
-        fig.colorbar(im)
-        if title:
-            fig.suptitle(title)
-    elif dimension == 3:
-        plt.rcParams.update({
-            'grid.linewidth': 0.5,
-            'grid.color': [0, 0, 0, 0.1],
-        })
-        length = np.linspace(-size / 2, size / 2, phase_.shape[0])
-        X, Y = np.meshgrid(length, length)
-        upper_value = max_value + (max_value - min_value) / 2
-        lower_value = min_value - (max_value - min_value) / 5
-        # stride = math.ceil(N / 25)
-        rccount = 100
-        if mask_r:
-            radius = np.sqrt(X**2 + Y**2)
-            # X[radius > size * mask_r / 2] = np.nan
-            # Y[radius > size * mask_r / 2] = np.nan
-            phase_[radius > size * mask_r / 2] = np.nan
-        fig = plt.figure(figsize=(8, 5))
-        ax = fig.add_subplot(111)
-        # aspect = 40
-        # pad_fraction = 0.5
-        # divider = make_axes_locatable(ax)
-        # width = axes_size.AxesY(ax, aspect=1. / aspect)
-        # pad = axes_size.Fraction(pad_fraction, width)
-        # cax = divider.append_axes('right', size=width, pad=pad)
-        caxins = inset_axes(ax,
-                            width='2.5%',
-                            height='85%',
-                            loc='right',
-                            bbox_to_anchor=(-0.075, -0.025, 1, 1),
-                            bbox_transform=ax.transAxes,
-                            borderpad=0)
-        ax = fig.add_subplot(111, projection='3d')
-        # ax.view_init(elev=20, azim=-60)
-        if PV != 'P-V: 0.0 λ' or RMS != 'RMS: 0.0 λ':
-            cset = ax.contourf(X, Y, phase_,
-                               zdir='z',
-                               offset=lower_value,
-                               cmap='rainbow', alpha=0.5)
-        im = ax.plot_surface(X, Y, phase_,
-                             rcount=rccount, ccount=rccount,
-                             cmap='rainbow', alpha=0.9,
-                             vmin=min_value, vmax=max_value)
-        ax.set_zlim(lower_value, upper_value)
-        # xticks = np.linspace(-size / 2, size / 2, 5)
-        # yticks = np.linspace(-size / 2, size / 2, 5)
-        # ax.set_xticks(xticks)
-        # ax.set_yticks(yticks)
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-        ax.zaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
-        xticklabels = ax.get_xticks() / unit_
-        yticklabels = ax.get_yticks() / unit_
-        ax.set_xticklabels(xticklabels.astype(np.float16))
-        ax.set_yticklabels(yticklabels.astype(np.float16))
-        ax.set_xlabel('x [%s]' % unit)
-        ax.set_ylabel('y [%s]' % unit)
-        ax.set_zlabel('Waves [λ]')
-        ax.xaxis.line.set_color('none')
-        ax.yaxis.line.set_color('none')
-        ax.zaxis.line.set_color('none')
-        ax.tick_params(which='both', axis='both', colors='gray', width=2)
-        for tickline in ax.zaxis.get_ticklines():
-            tickline.set_solid_capstyle('round')
-            tickline.set_linewidth(2)
-        for tickline in ax.xaxis.get_majorticklines():
-            tickline.set_solid_capstyle('round')
-            tickline.set_linewidth(2)
-        for tickline in ax.yaxis.get_majorticklines():
-            tickline.set_solid_capstyle('round')
-            tickline.set_linewidth(2)
-        ax.text2D(0.925, 0.75, PV,
-                  fontsize=12,
-                  horizontalalignment='right',
-                  transform=ax.transAxes)
-        ax.text2D(0.925, 0.70, RMS,
-                  fontsize=12,
-                  horizontalalignment='right',
-                  transform=ax.transAxes)
-        fig.colorbar(im, cax=caxins)
-        if mask_r:
-            radius = np.sqrt(X**2 + Y**2)
-            phase_[radius > size * mask_r / 2] = 0
-        if title:
-            # ax.set_title(title)
-            fig.suptitle(title, x=0.575, y=0.9)
-    else:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        center = int(phase_.shape[0] / 2)
-        color = 'cornflowerblue'
-        if mask_r:
-            length = int((phase_.shape[0] * mask_r) / 2) * 2
-            X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
-            left, right = center - length / 2, center + length / 2
-            _gradient_fill(ax, X, phase_[center][int(left):int(right)],
-                           linewidth=3,
-                           color=color)
+            # ax.set_xticks(xticks)
+            # ax.set_yticks(yticks)
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            ax.zaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
+            xticklabels = ax.get_xticks() / unit_
+            yticklabels = ax.get_yticks() / unit_
+            ax.set_xticklabels(xticklabels.astype(np.float16))
+            ax.set_yticklabels(yticklabels.astype(np.float16))
+            ax.set_xlabel('x [%s]' % unit)
+            ax.set_ylabel('y [%s]' % unit)
+            ax.set_zlabel('Waves [λ]')
+            ax.xaxis.line.set_color('none')
+            ax.yaxis.line.set_color('none')
+            ax.zaxis.line.set_color('none')
+            ax.tick_params(which='both', axis='both', colors='gray', width=2)
+            for tickline in ax.zaxis.get_ticklines():
+                tickline.set_solid_capstyle('round')
+                tickline.set_linewidth(2)
+            for tickline in ax.xaxis.get_majorticklines():
+                tickline.set_solid_capstyle('round')
+                tickline.set_linewidth(2)
+            for tickline in ax.yaxis.get_majorticklines():
+                tickline.set_solid_capstyle('round')
+                tickline.set_linewidth(2)
+            ax.text2D(0.925, 0.75, PV,
+                      fontsize=12,
+                      horizontalalignment='right',
+                      transform=ax.transAxes)
+            ax.text2D(0.925, 0.70, RMS,
+                      fontsize=12,
+                      horizontalalignment='right',
+                      transform=ax.transAxes)
+            fig.colorbar(im, cax=caxins)
+            if mask_r:
+                radius = np.sqrt(X**2 + Y**2)
+                phase_[radius > size * mask_r / 2] = 0
+            if title:
+                # ax.set_title(title)
+                fig.suptitle(title, x=0.575, y=0.9)
         else:
-            X = np.linspace(-size / 2, size / 2, phase_.shape[0])
-            _gradient_fill(ax, X, phase_[center],
-                           linewidth=3,
-                           color=color)
-        xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
-        ax.set_xticks(xticks)
-        xticklabels = ax.get_xticks() / unit_
-        ax.set_xticklabels(xticklabels.astype(np.float16))
-        ax.grid(True, axis='y', linewidth=0.5, color='lightgray')
-        ax.set_xlabel('Size [%s]' % unit)
-        ax.set_ylabel('Waves [λ]')
-        ax.spines['bottom'].set_color('none')
-        ax.spines['left'].set_color('none')
-        ax.spines['top'].set_color('none')
-        ax.spines['right'].set_color('none')
-        x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
-        ax.xaxis.set_minor_locator(
-            ticker.MultipleLocator(x_minor_ticklabels))
-        ax.tick_params(which='major', axis='x', colors='gray',
-                       width=2, size=2.5)
-        ax.tick_params(which='minor', axis='x', colors='gray',
-                       width=2, size=0.5)
-        ax.tick_params(which='both', axis='y', colors='gray', width=0)
-        for tickline in ax.xaxis.get_majorticklines():
-            tickline._marker._capstyle = 'round'
-        for tickline in ax.xaxis.get_minorticklines():
-            tickline._marker._capstyle = 'round'
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            center = int(phase_.shape[0] / 2)
+            color = 'cornflowerblue'
+            if mask_r:
+                length = int((phase_.shape[0] * mask_r) / 2) * 2
+                X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
+                left, right = center - length / 2, center + length / 2
+                _gradient_fill(ax, X, phase_[center][int(left):int(right)],
+                               linewidth=3,
+                               color=color)
+            else:
+                X = np.linspace(-size / 2, size / 2, phase_.shape[0])
+                _gradient_fill(ax, X, phase_[center],
+                               linewidth=3,
+                               color=color)
+            xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+            ax.set_xticks(xticks)
+            xticklabels = ax.get_xticks() / unit_
+            ax.set_xticklabels(xticklabels.astype(np.float16))
+            ax.grid(True, axis='y', linewidth=0.5, color='lightgray')
+            ax.set_xlabel('Size [%s]' % unit)
+            ax.set_ylabel('Waves [λ]')
+            ax.spines['bottom'].set_color('none')
+            ax.spines['left'].set_color('none')
+            ax.spines['top'].set_color('none')
+            ax.spines['right'].set_color('none')
+            x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
+            ax.xaxis.set_minor_locator(
+                ticker.MultipleLocator(x_minor_ticklabels))
+            ax.tick_params(which='major', axis='x', colors='gray',
+                           width=2, size=2.5)
+            ax.tick_params(which='minor', axis='x', colors='gray',
+                           width=2, size=0.5)
+            ax.tick_params(which='both', axis='y', colors='gray', width=0)
+            for tickline in ax.xaxis.get_majorticklines():
+                tickline._marker._capstyle = 'round'
+            for tickline in ax.xaxis.get_minorticklines():
+                tickline._marker._capstyle = 'round'
 
-        if title:
-            fig.suptitle(title)
+            if title:
+                fig.suptitle(title)
 
-    plt.show()
+        plt.show()
 
     if noise is True or return_data is True:
-        wavefront = Wavefront(phase_)
+        wavefront = Wavefront(phase_, size)
         return wavefront
         # return phase_
 
 
 def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
-                   unit='µm', title='', return_data=False, **kwargs):
+                   unit='µm', title='', return_data=False, showing=True,
+                   **kwargs):
     """Plot the intensity.
 
     Plot the intensity of light field using matplotlib.
@@ -541,109 +538,113 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 
     appr_size = approximate_size(size, unit_)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    if showing is True:
 
-    if dimension == 2:
-        extent = [-size / 2, size / 2, -size / 2, size / 2]
-        im = ax.imshow(intensity_, cmap='gist_gray', extent=extent, vmin=0)
-        # scalebar = AnchoredSizeBar(ax.transData,
-        #                            N / 5 * µm,
-        #                            'test',
-        #                            'lower left')
-        scalebar = ScaleBar(1.0, 'm', 'si-length',
-                            height_fraction=0.02,
-                            length_fraction=0.25,
-                            location='lower left',
-                            scale_loc='top',
-                            frameon=False,
-                            color='white')
-        ax.add_artist(scalebar)
-        if mask_r:
-            mask = patches.Circle([0, 0], mask_r, fc='none', ec='none')
-            ax.add_patch(mask)
-            im.set_clip_path(mask)
-        # xticks = np.linspace(-size / 2, size / 2, 5)
-        # yticks = np.linspace(-size / 2, size / 2, 5)
-        # ax.set_xticks(xticks)
-        # ax.set_yticks(yticks)
-        # xticklabels = ax.get_xticks() / unit_
-        # yticklabels = ax.get_yticks() / unit_
-        # ax.set_xticklabels(xticklabels.astype(np.float16))
-        # ax.set_yticklabels(yticklabels.astype(np.float16))
-        # ax.set_xlabel('Size [%s]' % unit)
-        ax.set_yticks([])
-        ax.set_xticks([])
-        fig.colorbar(im)
-    else:
-        # fig.set_size_inches(6, 2)
-        center = int(intensity_.shape[0] / 2)
-        # cmap = plt.get_cmap('Accent')
-        # color = cmap(np.asarray([2]))[0]
-        color = ('cornflowerblue'
-                 if kwargs['color'] is None else kwargs['color'])
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
-        if mask_r:
-            length = int((intensity_.shape[0] * mask_r) / 2) * 2
-            X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
-            [left, right] = [center - length / 2, center + length / 2]
-            # line = ax.plot(X, intensity_[center][int(left):int(right)],
-            #                linewidth=3,
-            #                color=color)
-            # shadow = ax.fill(X, intensity_[center][int(left):int(right)])
-            _gradient_fill(ax, X, intensity_[center][int(left):int(right)],
-                           linewidth=3,
-                           color=color)
+        if dimension == 2:
+            extent = [-size / 2, size / 2, -size / 2, size / 2]
+            im = ax.imshow(intensity_, cmap='gist_gray', extent=extent, vmin=0)
+            # scalebar = AnchoredSizeBar(ax.transData,
+            #                            N / 5 * µm,
+            #                            'test',
+            #                            'lower left')
+            scalebar = ScaleBar(1.0, 'm', 'si-length',
+                                height_fraction=0.02,
+                                length_fraction=0.25,
+                                location='lower left',
+                                scale_loc='top',
+                                frameon=False,
+                                color='white')
+            ax.add_artist(scalebar)
+            if mask_r:
+                mask = patches.Circle([0, 0], mask_r, fc='none', ec='none')
+                ax.add_patch(mask)
+                im.set_clip_path(mask)
+            # xticks = np.linspace(-size / 2, size / 2, 5)
+            # yticks = np.linspace(-size / 2, size / 2, 5)
+            # ax.set_xticks(xticks)
+            # ax.set_yticks(yticks)
+            # xticklabels = ax.get_xticks() / unit_
+            # yticklabels = ax.get_yticks() / unit_
+            # ax.set_xticklabels(xticklabels.astype(np.float16))
+            # ax.set_yticklabels(yticklabels.astype(np.float16))
+            # ax.set_xlabel('Size [%s]' % unit)
+            ax.set_yticks([])
+            ax.set_xticks([])
+            fig.colorbar(im)
         else:
-            X = np.linspace(-size / 2, size / 2, intensity_.shape[0])
-            # line = ax.plot(X, intensity_[center])
-            _gradient_fill(ax, X, intensity_[center],
-                           linewidth=3,
-                           color=color)
-        xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
-        ax.set_xticks(xticks)
-        xticklabels = ax.get_xticks() / unit_
-        # yticklabels = ax.get_yticks()
-        # topax = ax.secondary_xaxis('top')
-        # rightax = ax.secondary_yaxis('right')
-        ax.set_xticklabels(xticklabels.astype(np.float16))
-        ax.grid(True, axis='y', linewidth=0.5, color='lightgray')
-        ax.set_xlabel('Size [%s]' % unit)
-        ax.set_ylabel('Intensity [a.u.]')
-        ax.spines['bottom'].set_color('none')
-        ax.spines['left'].set_color('none')
-        ax.spines['top'].set_color('none')
-        ax.spines['right'].set_color('none')
-        # topax.spines['top'].set_color('none')
-        # rightax.spines['right'].set_color('none')
-        x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
-        # y_minor_ticklabels = (yticklabels[1] - yticklabels[0]) / 5
-        ax.xaxis.set_minor_locator(
-            ticker.MultipleLocator(x_minor_ticklabels))
-        # ax.yaxis.set_minor_locator(ticker.MultipleLocator(y_minor_ticklabels))
-        # topax.xaxis.set_minor_locator(ticker.MultipleLocator(x_minor_ticklabels))
-        # topax.xaxis.set_major_formatter(ticker.NullFormatter())
-        # rightax.yaxis.set_minor_locator(ticker.MultipleLocator(y_minor_ticklabels))
-        # rightax.yaxis.set_major_formatter(ticker.NullFormatter())
-        ax.tick_params(which='major', axis='x', colors='gray',
-                       width=2, size=2.5)
-        ax.tick_params(which='minor', axis='x', colors='gray',
-                       width=2, size=0.5)
-        ax.tick_params(which='both', axis='y', colors='gray', width=0)
-        # topax.tick_params(which='both', colors='gray', width=2)
-        # rightax.tick_params(which='both', colors='gray', width=2)
-        for tickline in ax.xaxis.get_majorticklines():
-            tickline._marker._capstyle = 'round'
-        for tickline in ax.xaxis.get_minorticklines():
-            tickline._marker._capstyle = 'round'
+            # fig.set_size_inches(6, 2)
+            center = int(intensity_.shape[0] / 2)
+            # cmap = plt.get_cmap('Accent')
+            # color = cmap(np.asarray([2]))[0]
+            color = ('cornflowerblue'
+                     if kwargs['color'] is None
+                     else kwargs['color'])
 
-    if title:
-        fig.suptitle(title)
+            if mask_r:
+                length = int((intensity_.shape[0] * mask_r) / 2) * 2
+                X = np.linspace(-size * mask_r / 2, size * mask_r / 2, length)
+                [left, right] = [center - length / 2, center + length / 2]
+                # line = ax.plot(X, intensity_[center][int(left):int(right)],
+                #                linewidth=3,
+                #                color=color)
+                # shadow = ax.fill(X, intensity_[center][int(left):int(right)])
+                _gradient_fill(ax, X,
+                               intensity_[center][int(left):int(right)],
+                               linewidth=3,
+                               color=color)
+            else:
+                X = np.linspace(-size / 2, size / 2, intensity_.shape[0])
+                # line = ax.plot(X, intensity_[center])
+                _gradient_fill(ax, X, intensity_[center],
+                               linewidth=3,
+                               color=color)
+            xticks = np.linspace(-appr_size / 2, appr_size / 2, 5)
+            ax.set_xticks(xticks)
+            xticklabels = ax.get_xticks() / unit_
+            # yticklabels = ax.get_yticks()
+            # topax = ax.secondary_xaxis('top')
+            # rightax = ax.secondary_yaxis('right')
+            ax.set_xticklabels(xticklabels.astype(np.float16))
+            ax.grid(True, axis='y', linewidth=0.5, color='lightgray')
+            ax.set_xlabel('Size [%s]' % unit)
+            ax.set_ylabel('Intensity [a.u.]')
+            ax.spines['bottom'].set_color('none')
+            ax.spines['left'].set_color('none')
+            ax.spines['top'].set_color('none')
+            ax.spines['right'].set_color('none')
+            # topax.spines['top'].set_color('none')
+            # rightax.spines['right'].set_color('none')
+            x_minor_ticklabels = (xticklabels[1] - xticklabels[0]) / 5 * unit_
+            # y_minor_ticklabels = (yticklabels[1] - yticklabels[0]) / 5
+            ax.xaxis.set_minor_locator(
+                ticker.MultipleLocator(x_minor_ticklabels))
+            # ax.yaxis.set_minor_locator(ticker.MultipleLocator(y_minor_ticklabels))
+            # topax.xaxis.set_minor_locator(ticker.MultipleLocator(x_minor_ticklabels))
+            # topax.xaxis.set_major_formatter(ticker.NullFormatter())
+            # rightax.yaxis.set_minor_locator(ticker.MultipleLocator(y_minor_ticklabels))
+            # rightax.yaxis.set_major_formatter(ticker.NullFormatter())
+            ax.tick_params(which='major', axis='x', colors='gray',
+                           width=2, size=2.5)
+            ax.tick_params(which='minor', axis='x', colors='gray',
+                           width=2, size=0.5)
+            ax.tick_params(which='both', axis='y', colors='gray', width=0)
+            # topax.tick_params(which='both', colors='gray', width=2)
+            # rightax.tick_params(which='both', colors='gray', width=2)
+            for tickline in ax.xaxis.get_majorticklines():
+                tickline._marker._capstyle = 'round'
+            for tickline in ax.xaxis.get_minorticklines():
+                tickline._marker._capstyle = 'round'
 
-    plt.show()
+        if title:
+            fig.suptitle(title)
+
+        plt.show()
 
     if return_data is True:
-        intensity_ins = Intensity(raw_intensity, intensity_)
+        intensity_ins = Intensity(raw_intensity, intensity_, size)
         return intensity_ins
         # return intensity_
 

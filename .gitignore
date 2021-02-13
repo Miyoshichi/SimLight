@@ -17,6 +17,7 @@ __pycache__/
 
 # example files
 spherical_aberration*.ipynb
+threed_localization*.ipynb
 
 # saved data files
 *.npy
