@@ -182,7 +182,10 @@ def aberration(field, zernike, nflag='rms'):
     j = zernike.j
     coeff = zernike.coefficients
 
-    phase_ratio = np.max(np.abs(coeff)) / 0.1
+    if np.max(np.abs(coeff)) > 0.1:
+        phase_ratio = np.max(np.abs(coeff)) / 0.1
+    else:
+        phase_ratio = 1
     coeff /= phase_ratio
 
     # x = np.linspace(-size, size, N)

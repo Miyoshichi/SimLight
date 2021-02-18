@@ -63,7 +63,8 @@ class Wavefront:
 
 class Intensity:
     def __init__(self, raw_intensity, normlized_intensity, size):
-        self._intensity_distrubution = raw_intensity
+        self._intensity_distribution = raw_intensity
+        self._camera_intensity = raw_intensity
         self._normlized_intensity = normlized_intensity
         self._max_intensity = self.__max_intensity(raw_intensity)
         self._size = size
@@ -73,8 +74,16 @@ class Intensity:
         return np.nanmax(intensity)
 
     @property
-    def intensity_distrubution(self):
-        return self._intensity_distrubution
+    def intensity_distribution(self):
+        return self._intensity_distribution
+
+    @property
+    def camera_intensity(self):
+        return self._camera_intensity
+
+    @camera_intensity.setter
+    def camera_intensity(self, camera_intensity):
+        self._camera_intensity = camera_intensity
 
     @property
     def normlized_intensity(self):
@@ -486,7 +495,6 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         intensity_ : numpy.ndarray
             Intensity data.
     """
-    field = sl.Field.copy(field)
 
     # check of input parameters
     if mask_r:
@@ -499,11 +507,16 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         if dimension < 1 or dimension > 2 or type(dimension) is not int:
             raise ValueError('Invalid dimension.')
     if isinstance(field, sl.Field) is True:
+        field = sl.Field.copy(field)
         size = field.size
         raw_intensity, intensity_ = intensity(field, norm_type=norm_type)
     elif isinstance(field, sl.ScatteringLayer) is True:
         size = field.size[0]
         raw_intensity, intensity_ = intensity(field, norm_type=norm_type)
+    elif isinstance(field, Intensity) is True:
+        size = field.size
+        raw_intensity = field.camera_intensity
+        intensity_ = field.normlized_intensity
     elif isinstance(field, list) is True:
         size = field[0]
         raw_intensity, intensity_ = intensity(field[2],
@@ -545,7 +558,8 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 
         if dimension == 2:
             extent = [-size / 2, size / 2, -size / 2, size / 2]
-            im = ax.imshow(intensity_, cmap='gist_gray', extent=extent, vmin=0)
+            cmap = kwargs['cmap'] if kwargs['cmap'] else 'gist_gray'
+            im = ax.imshow(intensity_, cmap=cmap, extent=extent, vmin=0)
             # scalebar = AnchoredSizeBar(ax.transData,
             #                            N / 5 * µm,
             #                            'test',
