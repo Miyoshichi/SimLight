@@ -361,7 +361,8 @@ class SphericalWave(Field):
         r = np.sqrt(X**2 + Y**2 + z**2)
         k = 2 * np.pi / wavelength
         phi = -k * r
-        return np.exp(1j * phi) / r
+        sphere = np.exp(1j * phi) / r if z > 0 else -np.exp(1j * phi) / r
+        return sphere
 
     @property
     def z(self):
@@ -448,7 +449,7 @@ class Gaussian(Field):
         X, Y = np.meshgrid(x, x)
         z_R = np.pi * w0**2 / wavelength
         w_z = w0 * np.sqrt(1 + (z / z_R)**2)
-        r_z = z * (1 + (z_R / z)**2) if z is not 0 else float('inf')
+        r_z = z * (1 + (z_R / z)**2) if z != 0 else float('inf')
         phi_z = np.arctan2(z, z_R)
         k = 2 * np.pi / wavelength
         return np.exp(-(X**2 + Y**2) / w_z**2) *\

@@ -106,9 +106,9 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
     # check of input parameters
     if z < 0:
         raise ValueError('The propagation distance cannot be negative.')
-    if lflag is 'py':
+    if lflag == 'py':
         pass
-    elif lflag is 'jl':
+    elif lflag == 'jl':
         module_dir = os.path.dirname(sl.__file__) + '/misc'
         os.chdir(module_dir)
         jl.include('3d_field_helper.jl')
@@ -223,7 +223,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
         #                       'negative distance of %f') % z_)
 
         new_field = fresnel(field, z1)
-        amp_scale = (f - z_) / f
+        amp_scale = abs((f - z_) / f)
         curvature = -1 / (z_ - f)
         new_field.size *= amp_scale
         new_field.complex_amp /= amp_scale
@@ -294,7 +294,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
                     field_.N,
                     lower + upper)),
                   end='')
-            if lflag is 'py':
+            if lflag == 'py':
                 new_complex_amp = np.zeros([lower + upper, lower + upper],
                                            dtype=np.complex)
                 # if lower + upper >= field_.N:
@@ -333,7 +333,7 @@ def near_field_propagation(field, lens, z, return_3d_field=False, mag=1,
             complex_amp_real = np.real(field_.complex_amp)
             complex_amp_imag = np.imag(field_.complex_amp)
             # TODO more effective resize alogrithm
-            if lflag is 'py':
+            if lflag == 'py':
                 # # interpolating method
                 # # before interpolating
                 # x = np.linspace(-field_.size / 2,

@@ -51,7 +51,7 @@ def fresnel(field, z):
     iiij2_half_field = iiij2N[:2 * half_field, :2 * half_field]
     iiijN = iiij2N[:N, :N]
 
-    RR = np.sqrt(1/(2 * field.wavelength * z)) * dx * 2
+    RR = np.sqrt(1/(2 * field.wavelength * abs(z))) * dx * 2
     io = np.arange(0, (2 * half_field) + 1)
     R1 = RR * (io - half_field)
     fs, fc = scipy.special.fresnel(R1)

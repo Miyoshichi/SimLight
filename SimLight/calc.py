@@ -15,7 +15,7 @@ import scipy.io
 
 import SimLight as sl
 import SimLight.plottools as slpl
-from .unwrap import simple_unwrap
+from .unwrap import simple_unwrap, dfs_unwrap, pypi_unwrap
 from .units import *
 
 
@@ -53,7 +53,7 @@ def phase(field, unwrap=False, **kwargs):
         raise ValueError('Invalid light field.')
 
     if unwrap is True:
-        phase = simple_unwrap(phase)
+        phase = pypi_unwrap(phase)
 
     phase *= phase_ratio
 
@@ -130,7 +130,7 @@ def psf(field, aperture_type='circle'):
     size_mag = size / 25.4
     N_mag = N / 100
 
-    if aperture_type is 'circle':
+    if aperture_type == 'circle':
         x = np.linspace(-size / 2, size / 2, N)
         X, Y = np.meshgrid(x, x)
         R = np.sqrt(X**2 + Y**2)
@@ -218,9 +218,9 @@ def aberration(field, zernike, nflag='rms'):
     # W(y, x) = zernike_coeff * Z
     phi = np.zeros((N, N))
     for i in range(j):
-        if nflag is 'rms':
+        if nflag == 'rms':
             phi = phi + coeff[i] * Z[:][:][i] * norm[i]
-        elif nflag is 'pv':
+        elif nflag == 'pv':
             phi = phi + coeff[i] * Z[:][:][i] / 2
         else:
             raise ValueError('Unspported normalization method.')

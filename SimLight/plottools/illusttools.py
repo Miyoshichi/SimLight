@@ -35,6 +35,7 @@ class Wavefront:
         self._pv = self.__pv(phase)
         self._rms = self.__rms(phase)
         self._size = size
+        self._scale = size / phase.shape[0]
 
     @staticmethod
     def __pv(wavefront):
@@ -60,6 +61,10 @@ class Wavefront:
     def size(self):
         return self._size
 
+    @property
+    def scale(self):
+        return self._scale
+
 
 class Intensity:
     def __init__(self, raw_intensity, normlized_intensity, size):
@@ -68,6 +73,7 @@ class Intensity:
         self._normlized_intensity = normlized_intensity
         self._max_intensity = self.__max_intensity(raw_intensity)
         self._size = size
+        self._scale = size / raw_intensity.shape[0]
 
     @staticmethod
     def __max_intensity(intensity):
@@ -96,6 +102,10 @@ class Intensity:
     @property
     def size(self):
         return self._size
+
+    @property
+    def scale(self):
+        return self._scale
 
 
 def _gradient_fill(ax, x, y, **kwargs):
@@ -153,7 +163,8 @@ def _gradient_fill(ax, x, y, **kwargs):
     return line, im
 
 
-def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
+def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
+                   dimension=2, unit='mm',
                    title='', return_data=False, showing=True,
                    **kwargs):
     """Plot the wavefront.
@@ -182,8 +193,6 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
         phase_ : numpy.ndarray
             Wavefront data.
     """
-    unwrap = True
-
     field = sl.Field.copy(field)
 
     # check of input parameters
@@ -231,6 +240,10 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
         lambdaflag = True
     else:
         raise ValueError('Invalid light field.')
+    if 'cmap' in kwargs:
+        cmap = kwargs['cmap']
+    else:
+        cmap = 'rainbow'
 
     # unit
     units = {
@@ -272,7 +285,7 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
             if mask_r:
                 extent = [-appr_size / 2, appr_size / 2,
                           -appr_size / 2, appr_size / 2]
-                im = ax.imshow(phase_, cmap='rainbow', extent=extent,
+                im = ax.imshow(phase_, cmap=cmap, extent=extent,
                                vmin=min_value, vmax=max_value)
                 mask = patches.Circle([0, 0], size * mask_r / 2,
                                       fc='none', ec='k',)
@@ -311,8 +324,8 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
                         fontsize=12,
                         horizontalalignment='left',
                         transform=ax.transAxes)
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            ax.xaxis.set_major_locator(ticker.LinearLocator(5))
+            ax.yaxis.set_major_locator(ticker.LinearLocator(5))
             xticklabels = ax.get_xticks() / unit_
             yticklabels = ax.get_yticks() / unit_
             ax.set_xticklabels(xticklabels.astype(np.float16))
@@ -362,16 +375,16 @@ def plot_wavefront(field, noise=None, mask_r=None, dimension=2, unit='mm',
                                    cmap='rainbow', alpha=0.5)
             im = ax.plot_surface(X, Y, phase_,
                                  rcount=rccount, ccount=rccount,
-                                 cmap='rainbow', alpha=0.9,
+                                 cmap=cmap, alpha=0.9,
                                  vmin=min_value, vmax=max_value)
             ax.set_zlim(lower_value, upper_value)
             # xticks = np.linspace(-size / 2, size / 2, 5)
             # yticks = np.linspace(-size / 2, size / 2, 5)
             # ax.set_xticks(xticks)
             # ax.set_yticks(yticks)
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-            ax.zaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+            ax.zaxis.set_major_locator(ticker.MaxNLocator(6))
             xticklabels = ax.get_xticks() / unit_
             yticklabels = ax.get_yticks() / unit_
             ax.set_xticklabels(xticklabels.astype(np.float16))
@@ -558,8 +571,18 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 
         if dimension == 2:
             extent = [-size / 2, size / 2, -size / 2, size / 2]
-            cmap = kwargs['cmap'] if kwargs['cmap'] else 'gist_gray'
-            im = ax.imshow(intensity_, cmap=cmap, extent=extent, vmin=0)
+            cmap = kwargs['cmap'] if 'cmap' in kwargs else 'gist_gray'
+            if norm_type == 2:
+                vmax = 255
+            elif norm_type == 1:
+                vmax = 1
+            else:
+                vmax = intensity_.max()
+            im = ax.imshow(intensity_,
+                           cmap=cmap,
+                           extent=extent,
+                           vmin=0,
+                           vmax=vmax)
             # scalebar = AnchoredSizeBar(ax.transData,
             #                            N / 5 * µm,
             #                            'test',
@@ -657,10 +680,15 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
 
         plt.show()
 
-    if return_data is True:
-        intensity_ins = Intensity(raw_intensity, intensity_, size)
+    if return_data:
+        if return_data == 'ins':
+            intensity_ins = Intensity(raw_intensity, intensity_, size)
+        elif return_data == 'ndarray':
+            intensity_ins = intensity_
+        else:
+            raise ValueError('Unknown return data type.')
+
         return intensity_ins
-        # return intensity_
 
 
 def plot_vertical_intensity(field_3d, norm_type=0, mag=1, title=''):
@@ -973,7 +1001,7 @@ def plot_wavefront_diff(*fields, mask_r=1, dimension=2, unit='mm',
     docstring
     """
     # input check
-    if len(fields) is not 2:
+    if len(fields) != 2:
         raise ValueError('Input light field number error.')
 
     wavelength = (fields[-1].wavelength
@@ -1346,7 +1374,7 @@ def plot_zernike_coeffs(*coeffs, labels=None, title=''):
     for index, coeff in enumerate(coeffs):
         orders = np.arange(len(coeff))
         shift = (math.ceil(index - len(coeffs) / 2)
-                 if len(coeffs) % 2 is not 0
+                 if len(coeffs) % 2 != 0
                  else index - (len(coeffs) - 1) / 2)
         locals()['im' + str(index + 1)] = ax.bar(orders + width * shift,
                                                  coeff,
