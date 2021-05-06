@@ -19,7 +19,7 @@ from .unwrap import simple_unwrap, dfs_unwrap, pypi_unwrap
 from .units import *
 
 
-def phase(field, unwrap=False, **kwargs):
+def phase(field, unwrap=False, mode='ratio', **kwargs):
     """
     Calculate the phase of a light field.
 
@@ -39,11 +39,17 @@ def phase(field, unwrap=False, **kwargs):
         N = field.N
         phase_ratio = field.phase_ratio
         # wavelength = field.wavelength
-        phase = np.angle(field.complex_amp2)
+        if mode == 'ratio':
+            phase = np.angle(field.complex_amp2)
+        else:
+            phase = np.angle(field.complex_amp)
     elif isinstance(field, sl.ScatteringLayer) is True:
         N = field.N[0]
         phase_ratio = field.phase_ratio
-        phase = np.angle(field.complex_amp2)
+        if mode == 'ratio':
+            phase = np.angle(field.complex_amp2)
+        else:
+            phase = np.angle(field.complex_amp)
     elif isinstance(field, np.ndarray) is True:
         N = field.shape[0]
         phase_ratio = kwargs['phase_ratio']
@@ -53,9 +59,10 @@ def phase(field, unwrap=False, **kwargs):
         raise ValueError('Invalid light field.')
 
     if unwrap is True:
-        phase = pypi_unwrap(phase)
+        phase = pypi_unwrap(pypi_unwrap(pypi_unwrap(phase)))
 
-    phase *= phase_ratio
+    if mode == 'ratio':
+        phase *= phase_ratio
 
     return phase
 

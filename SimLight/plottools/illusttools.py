@@ -5,6 +5,7 @@ Created on May 22, 2020
 @author: Zhou Xiang
 """
 
+import warnings
 import math
 from matplotlib.pyplot import axis, bar
 import numpy as np
@@ -26,6 +27,7 @@ from ..utils import pv, rms, return_circle_aperature, approximate_size
 from ..calc import phase, intensity, psf, zernike_coeffs
 from ..units import *
 
+warnings.filterwarnings('ignore')
 np.random.seed(235)
 
 
@@ -46,8 +48,8 @@ class Wavefront:
         return rms(wavefront, mask=True)
 
     @property
-    def wavefront(self):
-        return self._wavefront
+    def wavefront_distribution(self):
+        return self._wavefront_distribution
 
     @property
     def pv(self):
@@ -164,7 +166,7 @@ def _gradient_fill(ax, x, y, **kwargs):
 
 
 def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
-                   dimension=2, unit='mm',
+                   dimension=2, unit='mm', mode='ratio',
                    title='', return_data=False, showing=True,
                    **kwargs):
     """Plot the wavefront.
@@ -206,13 +208,13 @@ def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
         wavelength = field.wavelength
         size = field.size
         N = field.N
-        phase_ = phase(field, unwrap=unwrap)
+        phase_ = phase(field, unwrap=unwrap, mode=mode)
         lambdaflag = False
     elif isinstance(field, sl.ScatteringLayer) is True:
         wavelength = field.wavelength
         size = field.size[0]
         N = field.N[0]
-        phase_ = phase(field, unwrap=unwrap)
+        phase_ = phase(field, unwrap=unwrap, mode=mode)
         lambdaflag = False
     elif isinstance(field, list) is True:
         if len(field) == 6:
@@ -222,6 +224,7 @@ def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
             phase_ratio = field[4]
             phase_ = phase(field[3],
                            unwrap=unwrap,
+                           mode=mode,
                            phase_ratio=phase_ratio)
             lambdaflag = False
         elif len(field) == 5:
@@ -237,7 +240,7 @@ def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
         size = kwargs['size']
         N = kwargs['N']
         phase_ = field
-        lambdaflag = True
+        lambdaflag = kwargs['lambdaflag']
     else:
         raise ValueError('Invalid light field.')
     if 'cmap' in kwargs:
@@ -256,7 +259,7 @@ def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
     }
     unit_ = units[unit]
 
-    if lambdaflag is False:
+    if lambdaflag is False and unwrap is True:
         phase_ = wavelength * phase_ / (2 * np.pi) / µm
     if noise:
         noise_data = np.random.rand(N, N) * noise
@@ -264,13 +267,13 @@ def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
 
     if mask_r:
         _, _, norm_radius = return_circle_aperature(phase_, mask_r)
-        max_value = np.max(phase_[norm_radius <= mask_r])
-        min_value = np.min(phase_[norm_radius <= mask_r])
+        max_value = np.nanmax(phase_[norm_radius <= mask_r])
+        min_value = np.nanmin(phase_[norm_radius <= mask_r])
         PV = 'P-V: ' + str(round(pv(phase_, mask=True), 3)) + ' λ'
         RMS = 'RMS: ' + str(round(rms(phase_, mask=True), 3)) + ' λ'
     else:
-        max_value = np.max(phase_)
-        min_value = np.min(phase_)
+        max_value = np.nanmax(phase_)
+        min_value = np.nanmin(phase_)
         PV = 'P-V: ' + str(round(pv(phase_), 3)) + ' λ'
         RMS = 'RMS: ' + str(round(rms(phase_), 3)) + ' λ'
 
@@ -283,8 +286,8 @@ def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
             length = np.linspace(-size / 2, size / 2, phase_.shape[0])
             X, Y = np.meshgrid(length, length)
             if mask_r:
-                extent = [-appr_size / 2, appr_size / 2,
-                          -appr_size / 2, appr_size / 2]
+                extent = [-size / 2, size / 2,
+                          -size / 2, size / 2]
                 im = ax.imshow(phase_, cmap=cmap, extent=extent,
                                vmin=min_value, vmax=max_value)
                 mask = patches.Circle([0, 0], size * mask_r / 2,
@@ -312,7 +315,7 @@ def plot_wavefront(field, noise=None, mask_r=None, unwrap=True,
                         transform=ax.transAxes)
             else:
                 extent = [-size / 2, size / 2, -size / 2, size / 2]
-                im = ax.imshow(phase_, cmap='rainbow', extent=extent,
+                im = ax.imshow(phase_, cmap=cmap, extent=extent,
                                vmin=min_value, vmax=max_value)
                 # xticks = np.linspace(-size / 2, size / 2, 5)
                 # yticks = np.linspace(-size / 2, size / 2, 5)
