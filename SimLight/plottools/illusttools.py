@@ -75,7 +75,7 @@ class Intensity:
         self._normlized_intensity = normlized_intensity
         self._max_intensity = self.__max_intensity(raw_intensity)
         self._size = size
-        self._scale = size / raw_intensity.shape[0]
+        self._px_size = size / raw_intensity.shape[0]
 
     @staticmethod
     def __max_intensity(intensity):
@@ -106,8 +106,8 @@ class Intensity:
         return self._size
 
     @property
-    def scale(self):
-        return self._scale
+    def px_size(self):
+        return self._px_size
 
 
 def _gradient_fill(ax, x, y, **kwargs):
@@ -531,12 +531,22 @@ def plot_intensity(field, mask_r=None, norm_type=0, dimension=2, mag=1,
         raw_intensity, intensity_ = intensity(field, norm_type=norm_type)
     elif isinstance(field, Intensity) is True:
         size = field.size
-        raw_intensity = field.camera_intensity
-        intensity_ = field.normlized_intensity
+        raw_intensity = field.intensity_distribution
+        intensity_ = field.camera_intensity
+        if norm_type < 0 or norm_type > 2 or type(norm_type) is not int:
+            raise ValueError('Unknown normalization type.')
+        elif norm_type >= 1:
+            intensity_ /= np.max(intensity_)
+            if norm_type == 2:
+                intensity_ *= 255
     elif isinstance(field, list) is True:
         size = field[0]
         raw_intensity, intensity_ = intensity(field[2],
                                               norm_type=norm_type)
+    elif isinstance(field, np.ndarray) is True:
+        size = kwargs['px_size'] * field.shape[0]
+        intensity_ = field
+        raw_intensity = field
     else:
         raise ValueError('Invalid light field.')
 
