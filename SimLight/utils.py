@@ -317,3 +317,11 @@ def approximate_size(size, unit):
     appr_size *= 10**(scaled_size_number - 1) * unit
 
     return appr_size
+
+
+def norm_img(img, val=1):
+    img = copy.deepcopy(img)
+
+    img -= img.min()
+    img /= img.max()
+    return img*val
