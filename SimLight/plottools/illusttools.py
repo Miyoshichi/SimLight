@@ -5,6 +5,7 @@ Created on May 22, 2020
 @author: Zhou Xiang
 """
 
+import copy
 import warnings
 import math
 from matplotlib.pyplot import axis, bar
@@ -70,8 +71,8 @@ class Wavefront:
 
 class Intensity:
     def __init__(self, raw_intensity, normlized_intensity, size):
-        self._intensity_distribution = raw_intensity
-        self._camera_intensity = raw_intensity
+        self._intensity_distribution = copy.deepcopy(raw_intensity)
+        self._camera_intensity = copy.deepcopy(raw_intensity)
         self._normlized_intensity = normlized_intensity
         self._max_intensity = self.__max_intensity(raw_intensity)
         self._size = size
